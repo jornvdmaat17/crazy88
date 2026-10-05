@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12101a">
+  <title>Crazy 88 · Gallery</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap wide">
+      <div class="row">
+        <div class="title grow">Crazy 88 · Gallery</div>
+        <a class="btn secondary small" id="back" href="/">Back</a>
+      </div>
+    </div>
+  </header>
+  <main class="wrap wide">
+    <div id="closed" class="card empty hidden">
+      <h2>The gallery opens when the game ends</h2>
+      <p class="muted">Keep snapping!</p>
+    </div>
+    <div id="content" class="hidden">
+      <section class="card">
+        <h2>Final scores</h2>
+        <ul class="scores" id="scores"></ul>
+        <p class="small muted" id="pending-note"></p>
+      </section>
+      <div class="tabs" id="filters">
+        <button data-filter="all" class="active">All photos</button>
+        <button data-filter="approved">Approved</button>
+        <button data-filter="rejected">Rejected</button>
+      </div>
+      <div id="prompts"></div>
+    </div>
+  </main>
+  <div id="lightbox" class="lightbox hidden"><div><img id="lb-img" alt=""><div class="cap" id="lb-cap"></div></div></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/gallery.js"></script>
+</body>
+</html>

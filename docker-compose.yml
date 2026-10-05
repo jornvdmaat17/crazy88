@@ -1,0 +1,26 @@
+name: crazy88
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      TRUST_PROXY: uniquelocal
+    ports:
+      - "127.0.0.1:${APP_PORT:-8095}:3000"
+    volumes:
+      - crazy88-data:/data
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Set TUNNEL_TOKEN in .env}
+    depends_on:
+      - app
+
+volumes:
+  crazy88-data:

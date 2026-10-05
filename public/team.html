@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12101a">
+  <title>Crazy 88 · Team</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <div class="row">
+        <div class="grow">
+          <div class="title" id="team-name">…</div>
+          <div class="small muted"><span id="phase"></span> <span class="timer" id="timer"></span></div>
+        </div>
+        <div style="text-align:right">
+          <div class="score-big" id="score">0</div>
+          <div class="small muted">of <span id="goal">…</span> pts</div>
+        </div>
+      </div>
+      <div class="meter" id="meter"><div class="fill" id="fill" style="width:0"></div></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="ending-banner" class="banner warn hidden">Final 5 minutes! Uploads close when the timer hits zero.</div>
+    <div id="ended-banner" class="banner info hidden">Game over! <a href="/gallery">See everyone's photos →</a></div>
+
+    <section id="lobby" class="card empty hidden">
+      <h2>Waiting for the game to start</h2>
+      <p class="muted"><span id="team-count">0</span> teams have joined. The admin will start the game soon.</p>
+    </section>
+
+    <section class="card" id="standings-card">
+      <div class="row">
+        <h3 class="grow" style="margin:0">Standings</h3>
+        <span class="small muted" id="standings-note"></span>
+      </div>
+      <ul class="scores" id="standings"></ul>
+    </section>
+
+    <section id="game" class="hidden">
+      <div class="tabs">
+        <button data-filter="todo" class="active">To do</button>
+        <button data-filter="pending">In review</button>
+        <button data-filter="done">Done</button>
+      </div>
+      <div id="prompts"></div>
+      <input type="file" id="file-input" accept="image/*" style="position:fixed;left:-9999px;opacity:0" tabindex="-1" aria-hidden="true">
+    </section>
+
+    <p style="text-align:center;margin-top:30px"><button class="secondary small" id="logout">Log out</button></p>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/team.js"></script>
+</body>
+</html>

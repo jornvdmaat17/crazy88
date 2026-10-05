@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12101a">
+  <title>Crazy 88 · Admin</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap wide">
+      <div class="row">
+        <div class="grow">
+          <div class="title">Crazy 88 · Admin</div>
+          <div class="small muted"><span id="phase"></span> <span class="timer" id="timer"></span></div>
+        </div>
+        <a class="btn secondary small" href="/review">Review (<span id="pending-top">0</span>)</a>
+        <a class="btn secondary small" href="/gallery">Gallery</a>
+        <button class="secondary small" id="logout">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap wide">
+    <div class="grid2">
+      <section class="card">
+        <h2>Game</h2>
+        <form id="settings">
+          <div class="row">
+            <div class="grow">
+              <label for="duration">Duration (minutes)</label>
+              <input id="duration" type="number" min="1" max="1440" required>
+            </div>
+            <div class="grow">
+              <label for="goal">Goal (points)</label>
+              <input id="goal" type="number" min="1" required>
+            </div>
+          </div>
+          <button type="submit" class="secondary" style="margin-top:10px">Save settings</button>
+        </form>
+        <hr style="border-color:var(--border);margin:16px 0">
+        <div class="row">
+          <button id="start" class="grow">▶ Start game</button>
+          <button id="end" class="danger grow">⏹ End game (5 min)</button>
+        </div>
+        <p class="small muted" id="game-help"></p>
+      </section>
+
+      <section class="card">
+        <div class="row"><h2 class="grow">Teams</h2><span class="muted"><span id="pending">0</span> photos waiting for review</span></div>
+        <ul class="scores" id="scores"></ul>
+        <p class="small muted">Live scores. Teams only see other teams' scores every 5 minutes.</p>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2>Prompts (<span id="prompt-count">0</span>)</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Prompt</th><th>Points</th><th title="Only one team can claim it">Exclusive</th><th>Status</th><th></th></tr></thead>
+          <tbody id="prompts"></tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:20px">Add prompt</h3>
+      <form id="add" class="row">
+        <input class="grow" name="text" placeholder="Take a photo of…" required maxlength="300">
+        <input name="points" type="number" min="0" value="10" style="width:90px" required>
+        <label class="row" style="margin:0"><input type="checkbox" name="exclusive"> Exclusive</label>
+        <button type="submit">Add</button>
+      </form>
+
+      <details style="margin-top:16px">
+        <summary class="muted">Bulk add</summary>
+        <p class="small muted">One prompt per line as <code>points | text</code>. Start the line with <code>!</code> to make it exclusive, e.g. <code>!50 | Team photo with a police officer</code>.</p>
+        <form id="bulk">
+          <textarea name="lines" rows="8" placeholder="10 | Selfie with a stranger's dog&#10;!50 | The whole team on a tractor"></textarea>
+          <button type="submit" style="margin-top:8px">Add all</button>
+        </form>
+      </details>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

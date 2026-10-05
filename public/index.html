@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12101a">
+  <title>Crazy 88</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <div class="wrap" style="max-width:420px;padding-top:12vh">
+    <div class="logo">Crazy 88</div>
+    <p class="muted">Snap the prompts, score the points, beat the other teams.</p>
+    <form id="login" class="card">
+      <label for="code">Game code</label>
+      <input id="code" name="code" autocomplete="off" autocapitalize="characters" required>
+      <div id="team-field">
+        <label for="teamName">Team name</label>
+        <input id="teamName" name="teamName" maxlength="40" autocomplete="off">
+        <p class="small muted" style="margin:6px 0 0">Teams only. Use the same name to log back in.</p>
+      </div>
+      <button type="submit" style="width:100%;margin-top:16px">Let's go</button>
+    </form>
+  </div>
+  <script type="module">
+    import { homeFor, toast } from '/js/common.js';
+
+    fetch('/api/me').then((r) => r.ok && r.json()).then((me) => {
+      if (me) location.href = homeFor(me.role);
+    });
+
+    document.getElementById('login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = new FormData(e.target);
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: form.get('code'), teamName: form.get('teamName') }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return toast(data.error || 'Login failed', true);
+      location.href = homeFor(data.role);
+    });
+  </script>
+</body>
+</html>
