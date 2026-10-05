@@ -40,7 +40,7 @@ function render() {
     $('interval').value = state.scoreIntervalMin;
   }
   $('scores-help').textContent = state.scoreIntervalMin
-    ? `Live scores. Teams see other teams' scores every ${state.scoreIntervalMin} minutes.`
+    ? `Live scores. Teams see other teams' scores every ${state.scoreIntervalMin} minute${state.scoreIntervalMin === 1 ? '' : 's'}.`
     : "Live scores. Teams don't see other teams' scores until the game ends.";
   $('duration').disabled = state.phase !== 'lobby';
   $('start').disabled = state.phase !== 'lobby';

@@ -1,65 +1,73 @@
 # Crazy 88
 
-A photo game for one evening. Teams photograph prompts on their phones, reviewers swipe to approve or reject, and the first team to get an approved photo on an exclusive prompt claims its points. When the game ends, everyone can see everyone's photos.
+A photo scavenger hunt for teams. Teams get a list of prompts, photograph them, and upload from their phone. Reviewers swipe to approve or reject, and approved photos score points. When the game ends, everyone browses all the photos.
 
-## Roles and codes
+It runs in the phone's web browser, so there's nothing to install for players: one phone per team and a code to log in.
 
-Everyone logs in on the same page with a code. There are no accounts.
+<p>
+  <img src="docs/img/team.png" width="270" alt="Team screen">
+  &nbsp;
+  <img src="docs/img/review.png" width="270" alt="Reviewer screen">
+</p>
 
-| Code (env var) | Who | What they can do |
+📄 **[Full guide (PDF)](docs/Crazy88-guide.pdf)**: how to play, how to host, a game-night checklist and troubleshooting.
+
+## How it works
+
+Everyone opens the same address and logs in with a code. There are no accounts.
+
+| Role | Logs in with | Does |
 |---|---|---|
-| `TEAM_CODE` | Each team (one phone per team) | Enter the code plus a team name. Logging in again with the same name rejoins that team. |
-| `REVIEWER_CODE` | Reviewers | Swipe through photos waiting for review. Each reviewer gets their own photos. |
-| `ADMIN_CODE` | Admin | Manage prompts, set the duration and point goal, start and end the game. Can also review. |
+| **Team** | Team code + a team name | Sees all prompts, uploads photos, follows its score. Logging in again with the same name rejoins the team. |
+| **Reviewer** | Reviewer code | Swipes right to approve, left to reject. Each reviewer gets different photos. |
+| **Admin** | Admin code | Manages prompts and settings, starts and ends the game, watches live scores. Can also review. |
 
-Logins last 3 days. Codes are case-insensitive.
+**The rules:**
+- **Normal prompts:** every team can earn the points, once.
+- **Exclusive prompts:** the first approved photo claims the points. Other teams' pending photos for that prompt are rejected automatically, and it locks for everyone else.
+- **Retries:** a rejected photo can be retried. While a photo is in review, the team can't upload another for that prompt.
+- **Scores:** each team sees its own score live. Other teams' scores are revealed every N minutes, set by the admin (default 5; 0 hides them until the end).
+- **Goal:** an optional point goal shows as a progress bar, with markers for the other teams.
+- **Ending:** the game ends when the timer runs out. **End game** brings the end forward to 5 minutes from now. After that, uploads close but reviewing continues.
+- **Gallery:** at the end, everyone sees every photo per prompt (approved, rejected and pending), with the exclusive winners highlighted.
+- **Reset game:** goes back to the lobby for another round. Prompts and settings are kept.
 
-## How a game runs
+<img src="docs/img/admin-game.png" alt="Admin page">
 
-1. **Lobby.** Admin adds prompts. Bulk add takes `points | text`; start a line with `!` to make it exclusive. Admin sets the duration and the goal, then watches teams join.
-2. **Start.** Admin presses Start. Teams see all prompts and the timer.
-3. **Play.** Teams upload photos, which are compressed on the phone first. A team can't upload again for a prompt while its photo is in review. After a rejection they can retry. Once approved, the prompt is done for that team.
-   - **Normal prompts:** every team can earn the points.
-   - **Exclusive prompts:** the first approved photo claims the prompt. Other teams' pending photos for it are rejected automatically and the prompt locks.
-   - Each team sees its own score live. Other teams' scores refresh every N minutes; the admin sets N (default 5). With N = 0, other teams' scores stay hidden until the game ends.
-   - The progress bar shows the goal, with markers for the other teams. A goal of 0 turns the goal and the bar off.
-4. **End.** Admin presses End game, which gives 5 more minutes (or less if the timer is already lower). When time runs out, uploads close and reviewers finish the queue.
-5. **Gallery.** After the end, everyone sees all photos per prompt: approved, rejected and pending, with the exclusive winners highlighted. It updates live while the last reviews come in.
+<img src="docs/img/gallery-exclusive.png" alt="Gallery: exclusive prompt with the winning photo">
 
-## Run locally
+## Hosting
+
+You need a Linux machine with Docker that is online during the game, and HTTPS for the phones. The included setup uses a free [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/), so no ports need to be opened.
+
+1. In Cloudflare Zero Trust, go to **Networks → Tunnels** and create a tunnel. Copy its token. Add a public hostname (e.g. `crazy88.yourdomain.com`) with service `HTTP` and URL `app:3000`.
+2. Get the code and configure it:
+   ```bash
+   git clone https://github.com/jornvdmaat17/crazy88.git && cd crazy88
+   cp deploy/crazy88.env.example .env
+   # edit .env: set TEAM_CODE, REVIEWER_CODE, ADMIN_CODE (all different) and TUNNEL_TOKEN
+   ```
+3. Start it:
+   ```bash
+   docker compose up -d --build
+   ```
+4. Open your hostname and log in with the admin code.
+
+The app also listens on `127.0.0.1:8095` on the server itself; change `APP_PORT` in `.env` if that port is taken. Without Cloudflare, drop the `tunnel` service from `docker-compose.yml` and put any HTTPS reverse proxy in front of that port. It must pass WebSockets through and allow uploads of at least 20 MB.
+
+**Data** (an SQLite database plus the photos, about 300 KB each) lives in the `crazy88-data` Docker volume. It survives restarts and updates (`git pull && docker compose up -d --build`).
+
+| Task | Command |
+|---|---|
+| Save all photos | `docker compose cp app:/data/uploads ./photos` |
+| Delete all data, including prompts | `docker compose down -v` |
+
+## Development
 
 ```bash
 npm install
-TEAM_CODE=TEAM REVIEWER_CODE=JUDGE ADMIN_CODE=BOSS npm start
-# open http://localhost:3000
-npm test   # game rule tests
+TEAM_CODE=TEAM REVIEWER_CODE=JUDGE ADMIN_CODE=BOSS npm start   # http://localhost:3000
+npm test
 ```
 
-## Deploy on EC2
-
-Photos are stored on the instance's disk under `DATA_DIR/uploads` (about 300 KB each after compression). The data lives in a SQLite file in `DATA_DIR`. For one game with ~5 teams, that is a few hundred MB at most, so S3 isn't needed.
-
-It runs with Docker Compose as two containers: the app, and a Cloudflare tunnel (`cloudflared`) that serves it over HTTPS on your domain. No inbound ports need to be opened. The app is also available on the instance itself at `127.0.0.1:8095` for debugging. Change `APP_PORT` in `.env` if that port is taken.
-
-1. **Create a tunnel.** In Cloudflare Zero Trust, go to Networks → Tunnels and create a tunnel. Copy its token. Add a public hostname (e.g. `crazy88.example.com`) with service type `HTTP` and URL `app:3000`.
-2. **Copy the project** to the instance (git clone or scp), then `cd` into it.
-3. **Config.** Run `cp deploy/crazy88.env.example .env`. In `.env`, set your own codes and `TUNNEL_TOKEN`.
-4. **Start:**
-   ```bash
-   docker compose up -d --build
-   docker compose logs -f tunnel   # should show "Registered tunnel connection"
-   ```
-   Open `https://<your hostname>`.
-
-The compose project is named `crazy88`, so its containers, network and volumes don't clash with other stacks on the same machine.
-
-Photos and the database live in the `crazy88-data` Docker volume. That volume survives container restarts and rebuilds, so the timer, scores and logins carry on if anything restarts mid-game.
-
-**Afterwards:** copy the photos out if you want to keep them, then terminate the instance:
-```bash
-docker compose cp app:/data/uploads ./photos
-```
-
-**Practice run:** press **Reset game** on the admin page. It goes back to the lobby, keeps prompts and settings, and deletes teams, photos and scores. Teams have to log in again. To wipe everything including prompts, run `docker compose down -v`, then `docker compose up -d`.
-
-**Without Docker:** install Node 20+ and run `npm ci --omit=dev && npm start` with the variables from `.env` set. Put any HTTPS reverse proxy in front of port 3000.
+Built with Node.js, Express, Socket.IO and SQLite (better-sqlite3), with plain HTML/JS on the frontend and no build step. The game rules live in `server/game.js`.

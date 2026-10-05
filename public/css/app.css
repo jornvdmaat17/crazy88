@@ -208,7 +208,7 @@ label { display: block; font-size: .9rem; color: var(--muted); margin: 10px 0 4p
 .gphoto.winner { border-color: var(--accent-2); }
 .gphoto img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
 .gphoto.rejected img { filter: grayscale(.8) brightness(.6); }
-.gphoto .cap { padding: 6px 8px; font-size: .8rem; display: flex; justify-content: space-between; gap: 6px; align-items: center; }
+.gphoto .cap { padding: 6px 8px; font-size: .8rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 6px; align-items: center; }
 .lightbox { position: fixed; inset: 0; background: rgba(0, 0, 0, .92); display: grid; place-items: center; z-index: 50; padding: 16px; cursor: zoom-out; }
 .lightbox img { max-width: 100%; max-height: 85dvh; border-radius: 10px; }
 .lightbox .cap { color: var(--text); text-align: center; margin-top: 10px; }
