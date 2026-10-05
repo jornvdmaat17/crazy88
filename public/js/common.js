@@ -7,7 +7,7 @@ export async function api(path, { method = 'GET', body } = {}) {
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) {
     location.href = '/';
-    throw new Error('Not logged in');
+    return new Promise(() => {}); // page is navigating away; leave the caller pending
   }
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
   return data;

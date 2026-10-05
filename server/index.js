@@ -189,6 +189,14 @@ app.post('/api/admin/end', auth('admin'), (req, res) => {
   res.json(game.adminView());
 });
 
+app.post('/api/admin/reset', auth('admin'), (req, res) => {
+  const files = game.reset();
+  files.forEach((f) => fs.rm(path.join(UPLOAD_DIR, f), { force: true }, () => {}));
+  game.tick();
+  notify({ queue: true });
+  res.json(game.adminView());
+});
+
 app.post('/api/admin/prompts', auth('admin'), (req, res) => {
   const list = Array.isArray(req.body.prompts) ? req.body.prompts : [req.body];
   game.addPrompts(list);

@@ -143,6 +143,11 @@ $('end').addEventListener('click', () => {
   act(() => api('/api/admin/end', { method: 'POST' }), 'Final 5 minutes started');
 });
 
+$('reset').addEventListener('click', () => {
+  if (!confirm('Reset the game? All teams, photos and scores are deleted. Prompts and settings are kept.')) return;
+  act(() => api('/api/admin/reset', { method: 'POST' }), 'Game reset, back to the lobby');
+});
+
 $('logout').addEventListener('click', logout);
 
 startTicker(() => {

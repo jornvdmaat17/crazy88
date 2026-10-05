@@ -59,6 +59,6 @@ Photos and the database live in the `crazy88-data` Docker volume. That volume su
 docker compose cp app:/data/uploads ./photos
 ```
 
-**Practice run:** `docker compose down -v` deletes the game data. Then `docker compose up -d` starts a clean game.
+**Practice run:** press **Reset game** on the admin page. It goes back to the lobby, keeps prompts and settings, and deletes teams, photos and scores. Teams have to log in again. To wipe everything including prompts, run `docker compose down -v`, then `docker compose up -d`.
 
 **Without Docker:** install Node 20+ and run `npm ci --omit=dev && npm start` with the variables from `.env` set. Put any HTTPS reverse proxy in front of port 3000.

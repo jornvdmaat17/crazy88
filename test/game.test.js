@@ -127,6 +127,26 @@ test('prompts with photos cannot be deleted; exclusive flag locked after approva
   assert.equal(game.liveScores().find((s) => s.name === 'Alpha').score, 60);
 });
 
+test('reset returns to the lobby, keeps prompts and settings, removes teams and photos', () => {
+  const { game, a, normal } = setup();
+  game.updateSettings({ goalPoints: 80 });
+  game.createSession('team-token', 'team', a.id);
+  game.createSession('admin-token', 'admin');
+  game.start();
+  game.addPhoto(a.id, normal.id, 'a.jpg');
+  game.triggerEnd();
+  assert.deepEqual(game.reset(), ['a.jpg']);
+  assert.equal(game.phase(), 'lobby');
+  assert.equal(game.state().goalPoints, 80);
+  assert.equal(game.prompts().length, 2);
+  assert.equal(game.teams().length, 0);
+  assert.equal(game.pendingCount(), 0);
+  assert.equal(game.getSession('team-token', Infinity), null);
+  assert.ok(game.getSession('admin-token', Infinity), 'admin stays logged in');
+  game.start();
+  assert.equal(game.phase(), 'active');
+});
+
 test('gallery lists every attempt with its status and exclusive winner', () => {
   const { game, a, b, special } = setup();
   game.start();

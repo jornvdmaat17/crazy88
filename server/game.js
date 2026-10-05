@@ -198,6 +198,20 @@ function createGame(db, { now = Date.now } = {}) {
     db.prepare('UPDATE game SET end_pressed_at = ?, ends_at = ? WHERE id = 1').run(t, Math.min(g.ends_at, t + ENDGAME_MS));
   }
 
+  // Back to the lobby for another round: prompts and settings stay, teams and photos go.
+  // Returns the photo filenames so the caller can delete the files.
+  function reset() {
+    return db.transaction(() => {
+      const files = db.prepare('SELECT filename FROM photos').all().map((p) => p.filename);
+      db.prepare('DELETE FROM photos').run();
+      db.prepare("DELETE FROM sessions WHERE role = 'team'").run();
+      db.prepare('DELETE FROM teams').run();
+      db.prepare('UPDATE game SET started_at = NULL, ends_at = NULL, end_pressed_at = NULL WHERE id = 1').run();
+      snapshot = null;
+      return files;
+    })();
+  }
+
   // --- photos ---
 
   function assertCanUpload(teamId, promptId) {
@@ -368,7 +382,7 @@ function createGame(db, { now = Date.now } = {}) {
     state, phase, tick, scoreboard, liveScores,
     joinTeam, createSession, getSession, deleteSession, teams,
     prompts, addPrompts, updatePrompt, deletePrompt,
-    updateSettings, start, triggerEnd,
+    updateSettings, start, triggerEnd, reset,
     addPhoto, assertCanUpload, getPhoto, nextForReviewer, pendingCount, decide,
     teamView, adminView, gallery,
   };
