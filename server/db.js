@@ -4,7 +4,8 @@ const SCHEMA = `
 CREATE TABLE IF NOT EXISTS game (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   duration_min INTEGER NOT NULL DEFAULT 60,
-  goal_points INTEGER NOT NULL DEFAULT 500,
+  goal_points INTEGER NOT NULL DEFAULT 500, -- 0 = no goal
+  score_interval_min INTEGER NOT NULL DEFAULT 5, -- 0 = other teams' scores hidden until the end
   started_at INTEGER,
   ends_at INTEGER,
   end_pressed_at INTEGER
@@ -54,6 +55,10 @@ function openDb(file) {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA);
+  const gameCols = db.prepare('PRAGMA table_info(game)').all().map((c) => c.name);
+  if (!gameCols.includes('score_interval_min')) {
+    db.exec('ALTER TABLE game ADD COLUMN score_interval_min INTEGER NOT NULL DEFAULT 5');
+  }
   return db;
 }
 

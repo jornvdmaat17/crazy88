@@ -234,7 +234,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong' });
 });
 
-app.use(express.static(path.join(__dirname, '..', 'public'), { extensions: ['html'] }));
+// "private, no-cache" stops Cloudflare from caching or overriding the browser TTL, so a redeploy is picked up on reload.
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  extensions: ['html'],
+  setHeaders: (res) => res.set('Cache-Control', 'private, no-cache'),
+}));
 
 // --- realtime ---
 

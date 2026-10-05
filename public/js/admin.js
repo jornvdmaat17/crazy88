@@ -25,7 +25,8 @@ async function act(fn, okMsg) {
   }
 }
 
-const editing = (el) => el.contains(document.activeElement);
+// Only text fields count: a focused button (e.g. the Delete just clicked) must not block a redraw.
+const editing = (el) => el.contains(document.activeElement) && document.activeElement.matches('input:not([type=checkbox]), textarea');
 
 function render() {
   const { state, scores, prompts, pending } = view;
@@ -36,7 +37,11 @@ function render() {
   if (!editing($('settings'))) {
     $('duration').value = state.durationMin;
     $('goal').value = state.goalPoints;
+    $('interval').value = state.scoreIntervalMin;
   }
+  $('scores-help').textContent = state.scoreIntervalMin
+    ? `Live scores. Teams see other teams' scores every ${state.scoreIntervalMin} minutes.`
+    : "Live scores. Teams don't see other teams' scores until the game ends.";
   $('duration').disabled = state.phase !== 'lobby';
   $('start').disabled = state.phase !== 'lobby';
   $('end').disabled = state.phase !== 'active';
@@ -48,7 +53,7 @@ function render() {
   }[state.phase];
 
   $('scores').innerHTML = scores.length
-    ? scores.map((s, i) => `<li><span>${i + 1}. ${esc(s.name)}</span><span>${s.score} / ${state.goalPoints}</span></li>`).join('')
+    ? scores.map((s, i) => `<li><span>${i + 1}. ${esc(s.name)}</span><span>${s.score}${state.goalPoints ? ` / ${state.goalPoints}` : ''}</span></li>`).join('')
     : '<li class="muted">No teams yet</li>';
 
   $('prompt-count').textContent = prompts.length;
@@ -127,7 +132,7 @@ $('bulk').addEventListener('submit', (e) => {
 
 $('settings').addEventListener('submit', (e) => {
   e.preventDefault();
-  const body = { goalPoints: Number($('goal').value) };
+  const body = { goalPoints: Number($('goal').value), scoreIntervalMin: Number($('interval').value) };
   if (view.state.phase === 'lobby') body.durationMin = Number($('duration').value);
   act(() => api('/api/admin/settings', { method: 'POST', body }), 'Settings saved');
 });

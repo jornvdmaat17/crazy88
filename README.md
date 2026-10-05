@@ -21,7 +21,8 @@ Logins last 3 days. Codes are case-insensitive.
 3. **Play.** Teams upload photos, which are compressed on the phone first. A team can't upload again for a prompt while its photo is in review. After a rejection they can retry. Once approved, the prompt is done for that team.
    - **Normal prompts:** every team can earn the points.
    - **Exclusive prompts:** the first approved photo claims the prompt. Other teams' pending photos for it are rejected automatically and the prompt locks.
-   - Each team sees its own score live. Other teams' scores refresh every 5 minutes. The progress bar shows the goal, with markers for the other teams.
+   - Each team sees its own score live. Other teams' scores refresh every N minutes; the admin sets N (default 5). With N = 0, other teams' scores stay hidden until the game ends.
+   - The progress bar shows the goal, with markers for the other teams. A goal of 0 turns the goal and the bar off.
 4. **End.** Admin presses End game, which gives 5 more minutes (or less if the timer is already lower). When time runs out, uploads close and reviewers finish the queue.
 5. **Gallery.** After the end, everyone sees all photos per prompt: approved, rejected and pending, with the exclusive winners highlighted. It updates live while the last reviews come in.
 

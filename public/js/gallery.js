@@ -49,8 +49,8 @@ function render() {
         <div class="gallery-grid" style="margin-top:10px">
           ${photos.map((ph) => `
             <div class="gphoto ${ph.status} ${p.exclusive && ph.status === 'approved' ? 'winner' : ''}"
-                 data-id="${ph.id}" data-cap="${esc(`${ph.team} · ${LABEL[ph.status]}${ph.reject_reason ? ` (${ph.reject_reason})` : ''}`)}">
-              <img src="/api/photos/${ph.id}" alt="" loading="lazy">
+                 data-url="${esc(ph.url)}" data-cap="${esc(`${ph.team} · ${LABEL[ph.status]}${ph.reject_reason ? ` (${ph.reject_reason})` : ''}`)}">
+              <img src="${esc(ph.url)}" alt="" loading="lazy">
               <div class="cap"><b>${esc(ph.team)}</b><span class="chip ${ph.status}" style="margin:0">${LABEL[ph.status]}</span></div>
             </div>`).join('')}
         </div>
@@ -69,7 +69,7 @@ $('filters').addEventListener('click', (e) => {
 $('prompts').addEventListener('click', (e) => {
   const tile = e.target.closest('.gphoto');
   if (!tile) return;
-  $('lb-img').src = `/api/photos/${tile.dataset.id}`;
+  $('lb-img').src = tile.dataset.url;
   $('lb-cap').textContent = tile.dataset.cap;
   $('lightbox').classList.remove('hidden');
 });

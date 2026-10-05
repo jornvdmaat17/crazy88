@@ -28,7 +28,8 @@ function render() {
   const phase = state.phase;
   $('team-name').textContent = team.name;
   $('score').textContent = score;
-  $('goal').textContent = state.goalPoints;
+  $('goal-line').textContent = state.goalPoints ? `of ${state.goalPoints} pts` : 'pts';
+  $('meter').classList.toggle('hidden', !state.goalPoints);
   $('phase').textContent = PHASE_LABEL[phase];
   $('lobby').classList.toggle('hidden', phase !== 'lobby');
   $('team-count').textContent = view.teamCount;
@@ -36,7 +37,7 @@ function render() {
   $('ending-banner').classList.toggle('hidden', phase !== 'ending');
   $('ended-banner').classList.toggle('hidden', phase !== 'ended');
 
-  renderMeter(score, state.goalPoints, scoreboard.scores.filter((s) => s.id !== team.id));
+  if (state.goalPoints) renderMeter(score, state.goalPoints, scoreboard.scores.filter((s) => s.id !== team.id));
   renderStandings(scoreboard, team.id, score);
   renderPrompts(prompts, phase);
   updateTimer();
@@ -68,12 +69,16 @@ function renderMeter(score, goal, others) {
 }
 
 function renderStandings(board, myId, myScore) {
-  const scores = board.scores.map((s) => (s.id === myId ? { ...s, score: myScore } : s))
-    .sort((a, b) => b.score - a.score);
+  const me = { id: myId, name: view.team.name, score: myScore };
+  const scores = board.hidden
+    ? [me]
+    : board.scores.map((s) => (s.id === myId ? me : s)).sort((a, b) => b.score - a.score);
   $('standings').innerHTML = scores.map((s) => `
     <li class="${s.id === myId ? 'me' : ''}"><span>${esc(s.name)}</span><span>${s.score}</span></li>
   `).join('');
-  if (board.live) {
+  if (board.hidden) {
+    $('standings-note').textContent = "Other teams' scores are revealed when the game ends";
+  } else if (board.live) {
     $('standings-note').textContent = view.state.phase === 'lobby' ? 'Teams in the game' : 'Final';
   } else {
     $('standings-note').textContent = `Others as of ${fmtClock(board.at)} · next update ${fmtClock(board.nextAt)}`;
@@ -103,8 +108,8 @@ function renderPrompts(prompts, phase) {
   }
   $('prompts').innerHTML = list.map((p) => {
     const bucket = promptBucket(p);
-    const thumb = p.latestPhotoId && p.status !== 'rejected'
-      ? `<img class="thumb" src="/api/photos/${p.latestPhotoId}" alt="" loading="lazy">` : '';
+    const thumb = p.latestPhotoUrl && p.status !== 'rejected'
+      ? `<img class="thumb" src="${esc(p.latestPhotoUrl)}" alt="" loading="lazy">` : '';
     const button = bucket === 'todo' && canUpload
       ? `<button class="upload-btn" data-prompt="${p.id}" aria-label="Upload photo">📷</button>` : '';
     return `

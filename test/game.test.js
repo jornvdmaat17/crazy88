@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { openDb } = require('../server/db');
-const { createGame, ENDGAME_MS, SNAPSHOT_MS } = require('../server/game');
+const { createGame, ENDGAME_MS } = require('../server/game');
 
 function setup() {
   let t = 1_000_000;
@@ -104,7 +104,7 @@ test('end button never extends a game that has less than 5 minutes left', () => 
   assert.equal(game.state().endsAt, endsAt);
 });
 
-test('team scoreboard only refreshes every 5 minutes during the game', () => {
+test('team scoreboard only refreshes every N minutes during the game (default 5)', () => {
   const { game, clock, a, normal } = setup();
   game.start();
   game.tick();
@@ -112,9 +112,43 @@ test('team scoreboard only refreshes every 5 minutes during the game', () => {
   const alpha = () => game.scoreboard().scores.find((s) => s.name === 'Alpha').score;
   assert.equal(alpha(), 0, 'hidden until next snapshot');
   assert.equal(game.teamView(a.id).score, 10, 'own score is live');
-  clock.advance(SNAPSHOT_MS);
+  clock.advance(4 * 60 * 1000);
+  assert.equal(game.tick().scoreboard, false);
+  clock.advance(60 * 1000);
   assert.equal(game.tick().scoreboard, true);
   assert.equal(alpha(), 10);
+});
+
+test('score interval can be changed to 10 minutes', () => {
+  const { game, clock } = setup();
+  game.updateSettings({ scoreIntervalMin: 10 });
+  game.start();
+  game.tick();
+  clock.advance(5 * 60 * 1000);
+  assert.equal(game.tick().scoreboard, false);
+  clock.advance(5 * 60 * 1000);
+  assert.equal(game.tick().scoreboard, true);
+  assert.equal(game.scoreboard().nextAt - game.scoreboard().at, 10 * 60 * 1000);
+});
+
+test('score interval 0 hides other teams until the game ends', () => {
+  const { game, clock, a, normal } = setup();
+  game.updateSettings({ scoreIntervalMin: 0, durationMin: 10 });
+  game.start();
+  game.decide(game.addPhoto(a.id, normal.id, 'a.jpg'), true, 'r1');
+  clock.advance(6 * 60 * 1000);
+  game.tick();
+  assert.deepEqual(game.scoreboard(), { scores: [], hidden: true });
+  assert.equal(game.teamView(a.id).score, 10);
+  clock.advance(4 * 60 * 1000);
+  assert.equal(game.scoreboard().scores.find((s) => s.name === 'Alpha').score, 10);
+});
+
+test('goal 0 means no goal; negative goal rejected', () => {
+  const { game } = setup();
+  game.updateSettings({ goalPoints: 0 });
+  assert.equal(game.state().goalPoints, 0);
+  assert.throws(() => game.updateSettings({ goalPoints: -1 }), /whole number/);
 });
 
 test('prompts with photos cannot be deleted; exclusive flag locked after approval', () => {

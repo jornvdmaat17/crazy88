@@ -49,7 +49,7 @@ function renderCard() {
         </div>
         <div class="prompt-text">${esc(current.prompt)}</div>
       </div>
-      <div class="photo"><img src="/api/photos/${current.id}" alt="Submitted photo"></div>
+      <div class="photo"><img src="${esc(current.url)}" alt="Submitted photo"></div>
       <div class="stamp yes">YES</div>
       <div class="stamp no">NOPE</div>
     </div>`;

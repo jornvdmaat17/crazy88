@@ -1,6 +1,8 @@
 const ENDGAME_MS = 5 * 60 * 1000;
-const SNAPSHOT_MS = 5 * 60 * 1000;
 const ASSIGNMENT_TIMEOUT_MS = 2 * 60 * 1000;
+
+// Photo ids restart after a reset or data wipe; the random filename keeps browser caches from showing an old photo.
+const photoUrl = (id, filename) => `/api/photos/${id}?v=${filename.split('.')[0]}`;
 
 class GameError extends Error {
   constructor(message, status = 400) {
@@ -26,6 +28,7 @@ function createGame(db, { now = Date.now } = {}) {
       phase: phase(g),
       durationMin: g.duration_min,
       goalPoints: g.goal_points,
+      scoreIntervalMin: g.score_interval_min,
       startedAt: g.started_at,
       endsAt: g.ends_at,
       serverNow: now(),
@@ -47,19 +50,27 @@ function createGame(db, { now = Date.now } = {}) {
     return liveScores().find((s) => s.id === teamId)?.score ?? 0;
   }
 
-  // Other teams' scores are only revealed every 5 minutes of game time, to keep tension.
+  // During the game, other teams' scores are only revealed every N minutes (or not at all when N is 0).
   function scoreboard() {
-    const p = phase();
-    if (p === 'lobby') return { scores: liveScores(), at: null, nextAt: null, live: true };
-    if (p === 'ended') return { scores: liveScores(), at: now(), nextAt: null, live: true };
-    if (!snapshot) refreshSnapshot();
-    return { scores: snapshot.scores, at: snapshot.at, nextAt: snapshot.at + SNAPSHOT_MS, live: false };
+    const g = settings();
+    const p = phase(g);
+    if (p === 'lobby') return { scores: liveScores(), live: true };
+    if (p === 'ended') return { scores: liveScores(), live: true };
+    if (g.score_interval_min === 0) return { scores: [], hidden: true };
+    if (!snapshot || snapshot.key !== snapshotKey(g)) refreshSnapshot(g);
+    return { scores: snapshot.scores, at: snapshot.at, nextAt: snapshot.at + g.score_interval_min * 60000 };
   }
 
-  function refreshSnapshot() {
-    const g = settings();
-    const bucket = Math.floor((now() - g.started_at) / SNAPSHOT_MS);
-    snapshot = { bucket, at: g.started_at + bucket * SNAPSHOT_MS, scores: liveScores() };
+  function snapshotKey(g) {
+    if (g.score_interval_min === 0) return 'hidden';
+    const interval = g.score_interval_min * 60000;
+    return `${interval}:${Math.floor((now() - g.started_at) / interval)}`;
+  }
+
+  function refreshSnapshot(g) {
+    const interval = g.score_interval_min * 60000;
+    const at = g.started_at + Math.floor((now() - g.started_at) / interval) * interval;
+    snapshot = { key: snapshotKey(g), at, scores: liveScores() };
   }
 
   let lastPhase = phase();
@@ -67,18 +78,15 @@ function createGame(db, { now = Date.now } = {}) {
   // Called periodically; reports what changed so the server can notify clients.
   function tick() {
     const changes = { phase: false, scoreboard: false };
-    const p = phase();
+    const g = settings();
+    const p = phase(g);
     if (p !== lastPhase) {
       changes.phase = true;
       lastPhase = p;
     }
-    if (p === 'active' || p === 'ending') {
-      const g = settings();
-      const bucket = Math.floor((now() - g.started_at) / SNAPSHOT_MS);
-      if (!snapshot || snapshot.bucket !== bucket) {
-        refreshSnapshot();
-        changes.scoreboard = true;
-      }
+    if ((p === 'active' || p === 'ending') && g.score_interval_min > 0 && snapshot?.key !== snapshotKey(g)) {
+      refreshSnapshot(g);
+      changes.scoreboard = true;
     }
     return changes;
   }
@@ -164,12 +172,17 @@ function createGame(db, { now = Date.now } = {}) {
 
   // --- game control ---
 
-  function updateSettings({ durationMin, goalPoints }) {
+  function updateSettings({ durationMin, goalPoints, scoreIntervalMin }) {
     const g = settings();
     if (goalPoints !== undefined) {
       const goal = Number(goalPoints);
-      if (!Number.isInteger(goal) || goal < 1) throw new GameError('Goal must be a positive whole number');
+      if (!Number.isInteger(goal) || goal < 0) throw new GameError('Goal must be a whole number (0 = no goal)');
       db.prepare('UPDATE game SET goal_points = ? WHERE id = 1').run(goal);
+    }
+    if (scoreIntervalMin !== undefined) {
+      const m = Number(scoreIntervalMin);
+      if (!Number.isInteger(m) || m < 0 || m > 24 * 60) throw new GameError('Score update interval must be 0-1440 minutes');
+      db.prepare('UPDATE game SET score_interval_min = ? WHERE id = 1').run(m);
     }
     if (durationMin !== undefined) {
       const d = Number(durationMin);
@@ -243,11 +256,15 @@ function createGame(db, { now = Date.now } = {}) {
     return db.prepare('SELECT * FROM photos WHERE id = ?').get(id);
   }
 
-  const reviewView = (id) => db.prepare(`
-    SELECT ph.id, ph.created_at, t.name AS team, p.text AS prompt, p.points, p.exclusive
-    FROM photos ph JOIN teams t ON t.id = ph.team_id JOIN prompts p ON p.id = ph.prompt_id
-    WHERE ph.id = ?
-  `).get(id);
+  const reviewView = (id) => {
+    const r = db.prepare(`
+      SELECT ph.id, ph.filename, ph.created_at, t.name AS team, p.text AS prompt, p.points, p.exclusive
+      FROM photos ph JOIN teams t ON t.id = ph.team_id JOIN prompts p ON p.id = ph.prompt_id
+      WHERE ph.id = ?
+    `).get(id);
+    const { filename, ...rest } = r;
+    return { ...rest, url: photoUrl(r.id, filename) };
+  };
 
   // Each reviewer gets their own photo; a photo assigned to someone who went quiet is handed out again.
   function nextForReviewer(reviewerKey) {
@@ -316,7 +333,7 @@ function createGame(db, { now = Date.now } = {}) {
 
   function teamView(teamId) {
     const team = db.prepare('SELECT id, name FROM teams WHERE id = ?').get(teamId);
-    const mine = db.prepare('SELECT id, prompt_id, status, reject_reason, created_at FROM photos WHERE team_id = ? ORDER BY created_at')
+    const mine = db.prepare('SELECT id, filename, prompt_id, status, reject_reason, created_at FROM photos WHERE team_id = ? ORDER BY created_at')
       .all(teamId);
     const byPrompt = new Map();
     for (const ph of mine) {
@@ -334,7 +351,7 @@ function createGame(db, { now = Date.now } = {}) {
         claimedBy: p.claimed_by,
         status: latest ? latest.status : null,
         rejectReason: latest ? latest.reject_reason : null,
-        latestPhotoId: latest ? latest.id : null,
+        latestPhotoUrl: latest ? photoUrl(latest.id, latest.filename) : null,
         attempts: attempts.length,
       };
     });
@@ -361,9 +378,9 @@ function createGame(db, { now = Date.now } = {}) {
 
   function gallery() {
     const photos = db.prepare(`
-      SELECT ph.id, ph.prompt_id, ph.status, ph.reject_reason, ph.created_at, t.name AS team
+      SELECT ph.id, ph.filename, ph.prompt_id, ph.status, ph.reject_reason, ph.created_at, t.name AS team
       FROM photos ph JOIN teams t ON t.id = ph.team_id ORDER BY ph.created_at
-    `).all();
+    `).all().map(({ filename, ...ph }) => ({ ...ph, url: photoUrl(ph.id, filename) }));
     return {
       state: state(),
       scores: liveScores(),
@@ -388,4 +405,4 @@ function createGame(db, { now = Date.now } = {}) {
   };
 }
 
-module.exports = { createGame, GameError, ENDGAME_MS, SNAPSHOT_MS };
+module.exports = { createGame, GameError, ENDGAME_MS };

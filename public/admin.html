@@ -34,8 +34,12 @@
               <input id="duration" type="number" min="1" max="1440" required>
             </div>
             <div class="grow">
-              <label for="goal">Goal (points)</label>
-              <input id="goal" type="number" min="1" required>
+              <label for="goal">Goal (points, 0 = no goal)</label>
+              <input id="goal" type="number" min="0" required>
+            </div>
+            <div class="grow">
+              <label for="interval">Other teams' scores every (min, 0 = only at the end)</label>
+              <input id="interval" type="number" min="0" max="1440" required>
             </div>
           </div>
           <button type="submit" class="secondary" style="margin-top:10px">Save settings</button>
@@ -53,7 +57,7 @@
       <section class="card">
         <div class="row"><h2 class="grow">Teams</h2><span class="muted"><span id="pending">0</span> photos waiting for review</span></div>
         <ul class="scores" id="scores"></ul>
-        <p class="small muted">Live scores. Teams only see other teams' scores every 5 minutes.</p>
+        <p class="small muted" id="scores-help"></p>
       </section>
     </div>
 
