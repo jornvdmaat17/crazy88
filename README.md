@@ -71,3 +71,7 @@ npm test
 ```
 
 Built with Node.js, Express, Socket.IO and SQLite (better-sqlite3), with plain HTML/JS on the frontend and no build step. The game rules live in `server/game.js`.
+
+## License
+
+[MIT](LICENSE)

@@ -2,6 +2,7 @@
   "name": "crazy88",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Crazy 88 photo game: teams upload photos for prompts, reviewers swipe to approve",
   "main": "server/index.js",
   "scripts": {
