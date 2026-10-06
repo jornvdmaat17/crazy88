@@ -130,6 +130,29 @@ $('bulk').addEventListener('submit', (e) => {
   }, `${list.length} prompts toegevoegd`);
 });
 
+const toLine = (p) => `${p.exclusive ? '!' : ''}${p.points} | ${p.text}`;
+const fillBulkEdit = () => { $('bulk-edit').lines.value = view.prompts.map(toLine).join('\n'); };
+
+// Filled only on open/reload, so live updates never overwrite what is being typed.
+$('bulk-edit-box').addEventListener('toggle', (e) => { if (e.target.open) fillBulkEdit(); });
+$('bulk-reload').addEventListener('click', fillBulkEdit);
+
+$('bulk-edit').addEventListener('submit', (e) => {
+  e.preventDefault();
+  let list;
+  try {
+    list = parseBulk(e.target.lines.value);
+  } catch (err) {
+    return toast(err.message, true);
+  }
+  if (!confirm(`De hele lijst overschrijven met ${list.length} prompts?`)) return;
+  act(async () => {
+    const res = await api('/api/admin/prompts', { method: 'PUT', body: { prompts: list } });
+    e.target.lines.value = res.prompts.map(toLine).join('\n');
+    return res;
+  }, 'Lijst opgeslagen');
+});
+
 $('settings').addEventListener('submit', (e) => {
   e.preventDefault();
   const body = { goalPoints: Number($('goal').value), scoreIntervalMin: Number($('interval').value) };

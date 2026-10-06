@@ -86,6 +86,18 @@
           <button type="submit" style="margin-top:8px">Alles toevoegen</button>
         </form>
       </details>
+
+      <details id="bulk-edit-box" style="margin-top:8px">
+        <summary class="muted">Alles bewerken</summary>
+        <p class="small muted">De hele lijst in hetzelfde formaat. Opslaan overschrijft alle prompts: regels die je weghaalt worden verwijderd en de volgorde van de regels wordt de nieuwe volgorde. Prompts met foto's kun je niet weghalen of hernoemen.</p>
+        <form id="bulk-edit">
+          <textarea name="lines" rows="16"></textarea>
+          <div class="row" style="margin-top:8px">
+            <button type="submit">Lijst opslaan</button>
+            <button type="button" class="secondary" id="bulk-reload">Opnieuw laden</button>
+          </div>
+        </form>
+      </details>
     </section>
   </main>
 

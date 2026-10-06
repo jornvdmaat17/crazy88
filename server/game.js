@@ -170,6 +170,31 @@ function createGame(db, { now = Date.now } = {}) {
     db.prepare('DELETE FROM prompts WHERE id = ?').run(id);
   }
 
+  // Overwrites the whole list. Lines are matched to existing prompts by text so their photos stay attached;
+  // a prompt that has photos cannot be dropped. All or nothing.
+  function replacePrompts(list) {
+    const valid = list.map(validatePrompt);
+    db.transaction(() => {
+      const existing = prompts();
+      const byText = new Map();
+      for (const p of existing) byText.set(p.text, [...(byText.get(p.text) || []), p]);
+      const kept = new Set();
+      const insert = db.prepare('INSERT INTO prompts (text, points, exclusive, sort_order) VALUES (?, ?, ?, ?)');
+      const setOrder = db.prepare('UPDATE prompts SET sort_order = ? WHERE id = ?');
+      valid.forEach((p, i) => {
+        const match = byText.get(p.text)?.shift();
+        if (!match) return insert.run(p.text, p.points, p.exclusive, i + 1);
+        kept.add(match.id);
+        updatePrompt(match.id, p);
+        setOrder.run(i + 1, match.id);
+      });
+      for (const p of existing.filter((x) => !kept.has(x.id))) {
+        if (p.photo_count) throw new GameError(`"${p.text}" heeft al foto's en kan niet worden verwijderd`);
+        db.prepare('DELETE FROM prompts WHERE id = ?').run(p.id);
+      }
+    })();
+  }
+
   // --- game control ---
 
   function updateSettings({ durationMin, goalPoints, scoreIntervalMin }) {
@@ -398,7 +423,7 @@ function createGame(db, { now = Date.now } = {}) {
   return {
     state, phase, tick, scoreboard, liveScores,
     joinTeam, createSession, getSession, deleteSession, teams,
-    prompts, addPrompts, updatePrompt, deletePrompt,
+    prompts, addPrompts, replacePrompts, updatePrompt, deletePrompt,
     updateSettings, start, triggerEnd, reset,
     addPhoto, assertCanUpload, getPhoto, nextForReviewer, pendingCount, decide,
     teamView, adminView, gallery,

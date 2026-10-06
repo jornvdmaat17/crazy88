@@ -204,6 +204,13 @@ app.post('/api/admin/prompts', auth('admin'), (req, res) => {
   res.json(game.adminView());
 });
 
+app.put('/api/admin/prompts', auth('admin'), (req, res) => {
+  if (!Array.isArray(req.body.prompts)) throw new GameError('prompts moet een lijst zijn');
+  game.replacePrompts(req.body.prompts);
+  notify();
+  res.json(game.adminView());
+});
+
 app.put('/api/admin/prompts/:id', auth('admin'), (req, res) => {
   game.updatePrompt(Number(req.params.id), req.body);
   notify();

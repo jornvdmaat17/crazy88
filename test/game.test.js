@@ -161,6 +161,24 @@ test('prompts with photos cannot be deleted; exclusive flag locked after approva
   assert.equal(game.liveScores().find((s) => s.name === 'Alpha').score, 60);
 });
 
+test('replacePrompts overwrites the list, matching existing prompts by text', () => {
+  const { game, a, normal, special } = setup();
+  game.start();
+  game.addPhoto(a.id, normal.id, 'a.jpg');
+  game.replacePrompts([
+    { text: 'New one', points: 5, exclusive: true },
+    { text: 'Normal', points: 15, exclusive: false },
+  ]);
+  const list = game.prompts();
+  assert.deepEqual(list.map((p) => [p.text, p.points, p.exclusive]), [['New one', 5, true], ['Normal', 15, false]]);
+  assert.equal(list[1].id, normal.id);
+  assert.equal(list[1].photo_count, 1);
+  assert.equal(list.some((p) => p.id === special.id), false);
+
+  assert.throws(() => game.replacePrompts([{ text: 'New one', points: 5, exclusive: true }]), /Normal.*foto's/);
+  assert.equal(game.prompts().length, 2);
+});
+
 test('reset returns to the lobby, keeps prompts and settings, removes teams and photos', () => {
   const { game, a, normal } = setup();
   game.updateSettings({ goalPoints: 80 });
