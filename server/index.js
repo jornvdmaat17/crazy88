@@ -160,7 +160,7 @@ app.get('/api/review/next', auth('reviewer', 'admin'), (req, res) => {
 });
 
 app.post('/api/review/:id', auth('reviewer', 'admin'), (req, res) => {
-  const result = game.decide(Number(req.params.id), req.body.approve === true, req.session.role);
+  const result = game.decide(Number(req.params.id), req.body.approve === true, req.session.role, req.body.reason);
   notify({ queue: result.autoRejectedTeamIds.length > 0 });
   res.json(result);
 });

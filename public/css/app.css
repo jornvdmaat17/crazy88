@@ -201,6 +201,8 @@ label { display: block; font-size: .9rem; color: var(--muted); margin: 10px 0 4p
 .review-actions .no { background: var(--bad); }
 .review-actions .yes { background: var(--ok); color: #08291b; }
 .empty { text-align: center; padding: 60px 20px; }
+.reason-dialog { color: var(--text); width: min(420px, calc(100vw - 32px)); margin: auto; }
+.reason-dialog::backdrop { background: rgba(0, 0, 0, .7); }
 
 /* gallery */
 .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }

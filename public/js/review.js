@@ -56,13 +56,48 @@ function renderCard() {
   attachSwipe($('card'));
 }
 
+function resetCard(card) {
+  card.style.transform = '';
+  card.querySelectorAll('.stamp').forEach((s) => { s.style.opacity = 0; });
+}
+
+// Resolves to the (possibly empty) reason, or null when cancelled.
+function askReason() {
+  const dlg = $('reason-dialog');
+  $('reason').value = '';
+  dlg.returnValue = '';
+  dlg.showModal();
+  // Don't pop up the phone keyboard over the quick reasons; on desktop, type straight away.
+  (matchMedia('(pointer: fine)').matches ? $('reason') : $('reason-reject')).focus();
+  return new Promise((resolve) => {
+    dlg.addEventListener('close', () => resolve(dlg.returnValue === 'reject' ? $('reason').value.trim() : null), { once: true });
+  });
+}
+
+$('reason-presets').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  $('reason').value = b.textContent;
+  $('reason-dialog').close('reject');
+});
+$('reason-cancel').addEventListener('click', () => $('reason-dialog').close());
+
 async function decide(approve) {
   if (!current || busy) return;
   busy = true;
   const card = $('card');
+  let reason;
+  if (!approve) {
+    reason = await askReason();
+    if (reason === null) {
+      resetCard(card);
+      busy = false;
+      return;
+    }
+  }
   card.style.transform = `translateX(${approve ? 120 : -120}vw) rotate(${approve ? 20 : -20}deg)`;
   try {
-    const result = await api(`/api/review/${current.id}`, { method: 'POST', body: { approve } });
+    const result = await api(`/api/review/${current.id}`, { method: 'POST', body: { approve, reason } });
     reviewed++;
     $('done').textContent = reviewed;
     if (approve && result.status === 'rejected') toast(result.reason, true);
@@ -99,9 +134,7 @@ function attachSwipe(card) {
     dragging = false;
     card.classList.remove('dragging');
     if (Math.abs(dx) > 110) return decide(dx > 0);
-    card.style.transform = '';
-    yes.style.opacity = 0;
-    no.style.opacity = 0;
+    resetCard(card);
   };
   card.addEventListener('pointerup', end);
   card.addEventListener('pointercancel', end);
@@ -110,6 +143,7 @@ function attachSwipe(card) {
 $('btn-yes').addEventListener('click', () => decide(true));
 $('btn-no').addEventListener('click', () => decide(false));
 document.addEventListener('keydown', (e) => {
+  if ($('reason-dialog').open) return;
   if (e.key === 'ArrowRight') decide(true);
   if (e.key === 'ArrowLeft') decide(false);
 });

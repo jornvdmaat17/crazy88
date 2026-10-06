@@ -35,6 +35,23 @@
     <p class="small muted" style="text-align:center">Swipe naar rechts of druk op → om goed te keuren. Swipe naar links of druk op ← om af te keuren.</p>
   </main>
 
+  <dialog id="reason-dialog" class="card reason-dialog">
+    <form method="dialog">
+      <h3>Afkeuren</h3>
+      <label for="reason">Reden (optioneel, het team ziet deze)</label>
+      <input id="reason" maxlength="200" autocomplete="off" placeholder="Bijv. foto is onscherp">
+      <div class="row" id="reason-presets" style="margin-top:10px">
+        <button type="button" class="secondary small">Past niet bij de prompt</button>
+        <button type="button" class="secondary small">Niet het hele team</button>
+        <button type="button" class="secondary small">Foto is onduidelijk</button>
+      </div>
+      <div class="row" style="margin-top:16px">
+        <button type="button" class="secondary grow" id="reason-cancel">Annuleren</button>
+        <button value="reject" class="danger grow" id="reason-reject">Afkeuren</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="/js/review.js"></script>
 </body>

@@ -161,6 +161,18 @@ test('prompts with photos cannot be deleted; exclusive flag locked after approva
   assert.equal(game.liveScores().find((s) => s.name === 'Alpha').score, 60);
 });
 
+test('a rejection can carry an optional reason the team sees', () => {
+  const { game, a, normal, special } = setup();
+  game.start();
+  const p1 = game.addPhoto(a.id, normal.id, '1.jpg');
+  game.decide(p1, false, 'r1', '  Foto is onscherp  ');
+  assert.equal(game.getPhoto(p1).reject_reason, 'Foto is onscherp');
+  assert.equal(game.teamView(a.id).prompts.find((p) => p.id === normal.id).rejectReason, 'Foto is onscherp');
+  const p2 = game.addPhoto(a.id, special.id, '2.jpg');
+  game.decide(p2, false, 'r1', '   ');
+  assert.equal(game.getPhoto(p2).reject_reason, null);
+});
+
 test('replacePrompts overwrites the list, matching existing prompts by text', () => {
   const { game, a, normal, special } = setup();
   game.start();

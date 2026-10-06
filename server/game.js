@@ -315,7 +315,7 @@ function createGame(db, { now = Date.now } = {}) {
   }
 
   // Returns { status, reason, teamId, autoRejectedTeamIds }.
-  function decide(photoId, approve, reviewer) {
+  function decide(photoId, approve, reviewer, rejectReason) {
     return db.transaction(() => {
       const ph = db.prepare(`
         SELECT ph.*, p.exclusive FROM photos ph JOIN prompts p ON p.id = ph.prompt_id WHERE ph.id = ?
@@ -326,8 +326,9 @@ function createGame(db, { now = Date.now } = {}) {
       const setStatus = db.prepare('UPDATE photos SET status = ?, reject_reason = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?');
 
       if (!approve) {
-        setStatus.run('rejected', null, t, reviewer, photoId);
-        return { status: 'rejected', reason: null, teamId: ph.team_id, autoRejectedTeamIds: [] };
+        const reason = String(rejectReason ?? '').trim().slice(0, 200) || null;
+        setStatus.run('rejected', reason, t, reviewer, photoId);
+        return { status: 'rejected', reason, teamId: ph.team_id, autoRejectedTeamIds: [] };
       }
 
       if (ph.exclusive) {
