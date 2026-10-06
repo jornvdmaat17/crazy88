@@ -34,8 +34,8 @@ function renderCard() {
   if (!current) {
     $('stage').innerHTML = `
       <div class="card empty">
-        <h2>All caught up</h2>
-        <p class="muted">New photos show up here automatically.</p>
+        <h2>Alles beoordeeld</h2>
+        <p class="muted">Nieuwe foto's verschijnen hier vanzelf.</p>
       </div>`;
     return;
   }
@@ -44,14 +44,14 @@ function renderCard() {
       <div class="info">
         <div class="row">
           <span class="chip">${esc(current.team)}</span>
-          <span class="chip">${current.points} pts</span>
-          ${current.exclusive ? '<span class="chip special">★ Exclusive</span>' : ''}
+          <span class="chip">${current.points} ptn</span>
+          ${current.exclusive ? '<span class="chip special">★ Exclusief</span>' : ''}
         </div>
         <div class="prompt-text">${esc(current.prompt)}</div>
       </div>
-      <div class="photo"><img src="${esc(current.url)}" alt="Submitted photo"></div>
-      <div class="stamp yes">YES</div>
-      <div class="stamp no">NOPE</div>
+      <div class="photo"><img src="${esc(current.url)}" alt="Ingestuurde foto"></div>
+      <div class="stamp yes">JA</div>
+      <div class="stamp no">NEE</div>
     </div>`;
   attachSwipe($('card'));
 }
@@ -66,7 +66,7 @@ async function decide(approve) {
     reviewed++;
     $('done').textContent = reviewed;
     if (approve && result.status === 'rejected') toast(result.reason, true);
-    else if (result.autoRejectedTeamIds.length) toast('Exclusive prompt claimed, other submissions rejected');
+    else if (result.autoRejectedTeamIds.length) toast('Exclusieve prompt geclaimd, andere inzendingen afgekeurd');
   } catch (err) {
     toast(err.message, true);
   }

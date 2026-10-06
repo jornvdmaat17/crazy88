@@ -56,8 +56,8 @@ function sessionFrom(cookieHeader) {
 function auth(...roles) {
   return (req, res, next) => {
     const s = sessionFrom(req.headers.cookie);
-    if (!s) return res.status(401).json({ error: 'Not logged in' });
-    if (roles.length && !roles.includes(s.role)) return res.status(403).json({ error: 'Not allowed' });
+    if (!s) return res.status(401).json({ error: 'Niet ingelogd' });
+    if (roles.length && !roles.includes(s.role)) return res.status(403).json({ error: 'Niet toegestaan' });
     req.session = s;
     next();
   };
@@ -78,9 +78,9 @@ function roleForCode(code) {
 }
 
 app.post('/api/login', (req, res) => {
-  if (rateLimited(req.ip)) return res.status(429).json({ error: 'Too many attempts, wait a minute' });
+  if (rateLimited(req.ip)) return res.status(429).json({ error: 'Te veel pogingen, wacht een minuut' });
   const role = roleForCode(req.body.code);
-  if (!role) return res.status(401).json({ error: 'Unknown code' });
+  if (!role) return res.status(401).json({ error: 'Onbekende code' });
   let teamId = null;
   if (role === 'team') {
     const team = game.joinTeam(req.body.teamName);
@@ -129,8 +129,8 @@ app.post('/api/photos', auth('team'), (req, res, next) => {
     return next(err);
   }
   upload.single('photo')(req, res, (err) => {
-    if (err) return next(new GameError(err.code === 'LIMIT_FILE_SIZE' ? 'Photo is too large (max 15 MB)' : 'Upload failed'));
-    if (!req.file) return next(new GameError('Please choose a photo (JPEG, PNG, WebP or HEIC)'));
+    if (err) return next(new GameError(err.code === 'LIMIT_FILE_SIZE' ? 'Foto is te groot (max 15 MB)' : 'Uploaden mislukt'));
+    if (!req.file) return next(new GameError('Kies een foto (JPEG, PNG, WebP of HEIC)'));
     try {
       const id = game.addPhoto(req.session.team_id, Number(req.query.promptId), req.file.filename);
       notify({ queue: true });
@@ -220,18 +220,18 @@ app.delete('/api/admin/prompts/:id', auth('admin'), (req, res) => {
 
 app.get('/api/gallery', auth(), (req, res) => {
   if (req.session.role === 'team' && game.phase() !== 'ended') {
-    return res.status(403).json({ error: 'The gallery opens when the game ends' });
+    return res.status(403).json({ error: 'De galerij gaat open als het spel voorbij is' });
   }
   res.json(game.gallery());
 });
 
-app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
+app.use('/api', (req, res) => res.status(404).json({ error: 'Niet gevonden' }));
 
 app.use((err, req, res, next) => {
   if (err instanceof GameError) return res.status(err.status).json({ error: err.message });
-  if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Invalid JSON' });
+  if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Ongeldige JSON' });
   console.error(err);
-  res.status(500).json({ error: 'Something went wrong' });
+  res.status(500).json({ error: 'Er ging iets mis' });
 });
 
 // "private, no-cache" stops Cloudflare from caching or overriding the browser TTL, so a redeploy is picked up on reload.

@@ -28,7 +28,7 @@ function render() {
   const phase = state.phase;
   $('team-name').textContent = team.name;
   $('score').textContent = score;
-  $('goal-line').textContent = state.goalPoints ? `of ${state.goalPoints} pts` : 'pts';
+  $('goal-line').textContent = state.goalPoints ? `van ${state.goalPoints} ptn` : 'ptn';
   $('meter').classList.toggle('hidden', !state.goalPoints);
   $('phase').textContent = PHASE_LABEL[phase];
   $('lobby').classList.toggle('hidden', phase !== 'lobby');
@@ -77,20 +77,20 @@ function renderStandings(board, myId, myScore) {
     <li class="${s.id === myId ? 'me' : ''}"><span>${esc(s.name)}</span><span>${s.score}</span></li>
   `).join('');
   if (board.hidden) {
-    $('standings-note').textContent = "Other teams' scores are revealed when the game ends";
+    $('standings-note').textContent = 'De scores van andere teams worden bekend als het spel voorbij is';
   } else if (board.live) {
-    $('standings-note').textContent = view.state.phase === 'lobby' ? 'Teams in the game' : 'Final';
+    $('standings-note').textContent = view.state.phase === 'lobby' ? 'Teams in het spel' : 'Eindstand';
   } else {
-    $('standings-note').textContent = `Others as of ${fmtClock(board.at)} · next update ${fmtClock(board.nextAt)}`;
+    $('standings-note').textContent = `Anderen om ${fmtClock(board.at)} · volgende update ${fmtClock(board.nextAt)}`;
   }
 }
 
 function statusChip(p) {
-  if (uploading.has(p.id)) return '<span class="chip pending">Uploading…</span>';
-  if (p.status === 'approved') return '<span class="chip approved">✓ Approved</span>';
-  if (p.status === 'pending') return '<span class="chip pending">⏳ In review</span>';
-  if (p.exclusive && p.claimedBy) return `<span class="chip">🔒 Claimed by ${esc(p.claimedBy)}</span>`;
-  if (p.status === 'rejected') return `<span class="chip rejected">✗ Rejected${p.rejectReason ? ': ' + esc(p.rejectReason) : ''} · try again</span>`;
+  if (uploading.has(p.id)) return '<span class="chip pending">Uploaden…</span>';
+  if (p.status === 'approved') return '<span class="chip approved">✓ Goedgekeurd</span>';
+  if (p.status === 'pending') return '<span class="chip pending">⏳ In beoordeling</span>';
+  if (p.exclusive && p.claimedBy) return `<span class="chip">🔒 Geclaimd door ${esc(p.claimedBy)}</span>`;
+  if (p.status === 'rejected') return `<span class="chip rejected">✗ Afgekeurd${p.rejectReason ? ': ' + esc(p.rejectReason) : ''} · probeer opnieuw</span>`;
   return '';
 }
 
@@ -99,11 +99,11 @@ function renderPrompts(prompts, phase) {
   const list = prompts.filter((p) => promptBucket(p) === filter);
   document.querySelectorAll('.tabs button').forEach((b) => {
     const n = prompts.filter((p) => promptBucket(p) === b.dataset.filter).length;
-    b.textContent = `${{ todo: 'To do', pending: 'In review', done: 'Done' }[b.dataset.filter]} (${n})`;
+    b.textContent = `${{ todo: 'Te doen', pending: 'In beoordeling', done: 'Klaar' }[b.dataset.filter]} (${n})`;
     b.classList.toggle('active', b.dataset.filter === filter);
   });
   if (!list.length) {
-    $('prompts').innerHTML = `<p class="muted empty">${filter === 'todo' ? 'Nothing left here. Legends.' : 'Nothing here yet.'}</p>`;
+    $('prompts').innerHTML = `<p class="muted empty">${filter === 'todo' ? 'Niks meer te doen. Legendes.' : 'Nog niks hier.'}</p>`;
     return;
   }
   $('prompts').innerHTML = list.map((p) => {
@@ -111,13 +111,13 @@ function renderPrompts(prompts, phase) {
     const thumb = p.latestPhotoUrl && p.status !== 'rejected'
       ? `<img class="thumb" src="${esc(p.latestPhotoUrl)}" alt="" loading="lazy">` : '';
     const button = bucket === 'todo' && canUpload
-      ? `<button class="upload-btn" data-prompt="${p.id}" aria-label="Upload photo">📷</button>` : '';
+      ? `<button class="upload-btn" data-prompt="${p.id}" aria-label="Foto uploaden">📷</button>` : '';
     return `
       <div class="prompt ${p.exclusive ? 'special' : ''} ${bucket === 'done' ? 'done' : ''}">
         <div class="pts">${p.points}</div>
         <div class="body">
           <div class="text">${esc(p.text)}</div>
-          ${p.exclusive ? '<span class="chip special">★ Only one team can claim this</span>' : ''}
+          ${p.exclusive ? '<span class="chip special">★ Maar één team kan deze claimen</span>' : ''}
           ${statusChip(p)}
         </div>
         ${thumb}${button}
@@ -155,8 +155,8 @@ async function uploadPhoto(promptId, file) {
     body.append('photo', blob, 'photo.jpg');
     const res = await fetch(`/api/photos?promptId=${promptId}`, { method: 'POST', body });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || 'Upload failed');
-    toast('Photo sent for review!');
+    if (!res.ok) throw new Error(data.error || 'Uploaden mislukt');
+    toast('Foto ingestuurd ter beoordeling!');
   } catch (err) {
     toast(err.message, true);
   } finally {

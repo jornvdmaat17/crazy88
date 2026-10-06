@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#12101a">
-  <title>Crazy 88 · Review</title>
+  <title>Crazy 88 · Jury</title>
   <link rel="icon" href="/favicon.svg">
   <link rel="stylesheet" href="/css/app.css">
 </head>
@@ -13,15 +13,15 @@
     <div class="wrap">
       <div class="row">
         <div class="grow">
-          <div class="title">Review</div>
+          <div class="title">Jury</div>
           <div class="small muted"><span id="phase"></span> <span class="timer" id="timer"></span></div>
         </div>
         <div class="small muted" style="text-align:right">
-          <div><b id="pending">0</b> waiting</div>
-          <div><b id="done">0</b> reviewed by you</div>
+          <div><b id="pending">0</b> wachtend</div>
+          <div><b id="done">0</b> door jou beoordeeld</div>
         </div>
-        <a class="btn secondary small hidden" id="admin-link" href="/admin">Admin</a>
-        <button class="secondary small" id="logout">Log out</button>
+        <a class="btn secondary small hidden" id="admin-link" href="/admin">Beheer</a>
+        <button class="secondary small" id="logout">Uitloggen</button>
       </div>
     </div>
   </header>
@@ -29,10 +29,10 @@
   <main class="wrap">
     <div class="review-stage" id="stage"></div>
     <div class="review-actions" id="actions">
-      <button class="no" id="btn-no" aria-label="Reject">✗</button>
-      <button class="yes" id="btn-yes" aria-label="Approve">✓</button>
+      <button class="no" id="btn-no" aria-label="Afkeuren">✗</button>
+      <button class="yes" id="btn-yes" aria-label="Goedkeuren">✓</button>
     </div>
-    <p class="small muted" style="text-align:center">Swipe right or press → to approve. Swipe left or press ← to reject.</p>
+    <p class="small muted" style="text-align:center">Swipe naar rechts of druk op → om goed te keuren. Swipe naar links of druk op ← om af te keuren.</p>
   </main>
 
   <script src="/socket.io/socket.io.js"></script>

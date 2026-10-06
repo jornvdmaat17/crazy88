@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -11,16 +11,16 @@
 <body>
   <div class="wrap" style="max-width:420px;padding-top:12vh">
     <div class="logo">Crazy 88</div>
-    <p class="muted">Snap the prompts, score the points, beat the other teams.</p>
+    <p class="muted">Maak foto's bij de prompts, scoor punten en versla de andere teams.</p>
     <form id="login" class="card">
-      <label for="code">Game code</label>
+      <label for="code">Spelcode</label>
       <input id="code" name="code" autocomplete="off" autocapitalize="characters" required>
       <div id="team-field">
-        <label for="teamName">Team name</label>
+        <label for="teamName">Teamnaam</label>
         <input id="teamName" name="teamName" maxlength="40" autocomplete="off">
-        <p class="small muted" style="margin:6px 0 0">Teams only. Use the same name to log back in.</p>
+        <p class="small muted" style="margin:6px 0 0">Alleen voor teams. Gebruik dezelfde naam om opnieuw in te loggen.</p>
       </div>
-      <button type="submit" style="width:100%;margin-top:16px">Let's go</button>
+      <button type="submit" style="width:100%;margin-top:16px">Aan de slag</button>
     </form>
   </div>
   <script type="module">
@@ -39,7 +39,7 @@
         body: JSON.stringify({ code: form.get('code'), teamName: form.get('teamName') }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) return toast(data.error || 'Login failed', true);
+      if (!res.ok) return toast(data.error || 'Inloggen mislukt', true);
       location.href = homeFor(data.role);
     });
   </script>

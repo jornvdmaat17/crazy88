@@ -6,7 +6,7 @@ $('back').href = homeFor(me.role);
 
 let data = null;
 let filter = 'all';
-const LABEL = { approved: '✓ Approved', rejected: '✗ Rejected', pending: '⏳ Pending' };
+const LABEL = { approved: '✓ Goedgekeurd', rejected: '✗ Afgekeurd', pending: '⏳ In beoordeling' };
 
 async function load() {
   const res = await fetch('/api/gallery');
@@ -28,12 +28,12 @@ async function load() {
 function render() {
   const { scores, prompts, state } = data;
   $('scores').innerHTML = scores.map((s, i) => `
-    <li><span>${['🥇', '🥈', '🥉'][i] || `${i + 1}.`} ${esc(s.name)}</span><span>${s.score} pts</span></li>
+    <li><span>${['🥇', '🥈', '🥉'][i] || `${i + 1}.`} ${esc(s.name)}</span><span>${s.score} ptn</span></li>
   `).join('');
   const pending = prompts.reduce((n, p) => n + p.photos.filter((ph) => ph.status === 'pending').length, 0);
   $('pending-note').textContent = state.phase !== 'ended'
-    ? 'Game still running, scores are not final.'
-    : pending ? `${pending} photo(s) still being reviewed, scores may change.` : '';
+    ? 'Het spel loopt nog, de scores zijn niet definitief.'
+    : pending ? `${pending} foto('s) nog in beoordeling, scores kunnen nog veranderen.` : '';
 
   document.querySelectorAll('#filters button').forEach((b) => b.classList.toggle('active', b.dataset.filter === filter));
   const sections = prompts.map((p) => {
@@ -43,8 +43,8 @@ function render() {
       <section class="card">
         <div class="row">
           <h3 class="grow" style="margin:0">${esc(p.text)}</h3>
-          <span class="chip">${p.points} pts</span>
-          ${p.exclusive ? `<span class="chip special">★ ${p.winner ? `Won by ${esc(p.winner)}` : 'Unclaimed'}</span>` : ''}
+          <span class="chip">${p.points} ptn</span>
+          ${p.exclusive ? `<span class="chip special">★ ${p.winner ? `Gewonnen door ${esc(p.winner)}` : 'Niet geclaimd'}</span>` : ''}
         </div>
         <div class="gallery-grid" style="margin-top:10px">
           ${photos.map((ph) => `
@@ -56,7 +56,7 @@ function render() {
         </div>
       </section>`;
   }).join('');
-  $('prompts').innerHTML = sections || '<p class="muted empty">No photos here.</p>';
+  $('prompts').innerHTML = sections || '<p class="muted empty">Geen foto\'s hier.</p>';
 }
 
 $('filters').addEventListener('click', (e) => {

@@ -19,7 +19,7 @@ function setup() {
 
 test('uploads are blocked before the game starts', () => {
   const { game, a, normal } = setup();
-  assert.throws(() => game.addPhoto(a.id, normal.id, 'x.jpg'), /not started/);
+  assert.throws(() => game.addPhoto(a.id, normal.id, 'x.jpg'), /nog niet begonnen/);
 });
 
 test('rejoining with the same name (any case) returns the same team', () => {
@@ -42,11 +42,11 @@ test('a team cannot upload again while pending or after approval, but can after 
   const { game, a, normal } = setup();
   game.start();
   const p1 = game.addPhoto(a.id, normal.id, '1.jpg');
-  assert.throws(() => game.addPhoto(a.id, normal.id, '2.jpg'), /still being reviewed/);
+  assert.throws(() => game.addPhoto(a.id, normal.id, '2.jpg'), /wordt nog beoordeeld/);
   game.decide(p1, false, 'r1');
   const p2 = game.addPhoto(a.id, normal.id, '2.jpg');
   game.decide(p2, true, 'r1');
-  assert.throws(() => game.addPhoto(a.id, normal.id, '3.jpg'), /already completed/);
+  assert.throws(() => game.addPhoto(a.id, normal.id, '3.jpg'), /al voltooid/);
   assert.equal(game.liveScores().find((s) => s.name === 'Alpha').score, 10);
 });
 
@@ -58,9 +58,9 @@ test('exclusive prompt: first approval claims it and auto-rejects other pending 
   const res = game.decide(pa, true, 'r1');
   assert.deepEqual(res.autoRejectedTeamIds, [b.id]);
   assert.equal(game.getPhoto(pb).status, 'rejected');
-  assert.match(game.getPhoto(pb).reject_reason, /Claimed by Alpha/);
-  assert.throws(() => game.decide(pb, true, 'r2'), /already reviewed/);
-  assert.throws(() => game.addPhoto(b.id, special.id, 'b2.jpg'), /Already claimed by Alpha/);
+  assert.match(game.getPhoto(pb).reject_reason, /Geclaimd door Alpha/);
+  assert.throws(() => game.decide(pb, true, 'r2'), /al beoordeeld/);
+  assert.throws(() => game.addPhoto(b.id, special.id, 'b2.jpg'), /Al geclaimd door Alpha/);
   assert.equal(game.prompts().find((p) => p.id === special.id).claimed_by, 'Alpha');
   assert.equal(game.liveScores().find((s) => s.name === 'Bravo').score, 0);
 });
@@ -85,12 +85,12 @@ test('ending gives 5 minutes, then uploads stop but reviews continue', () => {
   const pa = game.addPhoto(a.id, normal.id, 'a.jpg');
   game.triggerEnd();
   assert.equal(game.phase(), 'ending');
-  assert.throws(() => game.triggerEnd(), /already ending/);
+  assert.throws(() => game.triggerEnd(), /al aan het eindigen/);
   clock.advance(ENDGAME_MS - 1);
   game.addPhoto(b.id, normal.id, 'b.jpg');
   clock.advance(1);
   assert.equal(game.phase(), 'ended');
-  assert.throws(() => game.addPhoto(a.id, normal.id, 'late.jpg'), /game is over/);
+  assert.throws(() => game.addPhoto(a.id, normal.id, 'late.jpg'), /spel is voorbij/);
   assert.equal(game.decide(pa, true, 'r1').status, 'approved');
 });
 
@@ -148,15 +148,15 @@ test('goal 0 means no goal; negative goal rejected', () => {
   const { game } = setup();
   game.updateSettings({ goalPoints: 0 });
   assert.equal(game.state().goalPoints, 0);
-  assert.throws(() => game.updateSettings({ goalPoints: -1 }), /whole number/);
+  assert.throws(() => game.updateSettings({ goalPoints: -1 }), /heel getal/);
 });
 
 test('prompts with photos cannot be deleted; exclusive flag locked after approval', () => {
   const { game, a, special } = setup();
   game.start();
   game.decide(game.addPhoto(a.id, special.id, 'a.jpg'), true, 'r1');
-  assert.throws(() => game.deletePrompt(special.id), /already has photos/);
-  assert.throws(() => game.updatePrompt(special.id, { text: 'S', points: 5, exclusive: false }), /exclusive flag/);
+  assert.throws(() => game.deletePrompt(special.id), /met foto's/);
+  assert.throws(() => game.updatePrompt(special.id, { text: 'S', points: 5, exclusive: false }), /Exclusief kan niet/);
   game.updatePrompt(special.id, { text: 'Renamed', points: 60, exclusive: true });
   assert.equal(game.liveScores().find((s) => s.name === 'Alpha').score, 60);
 });

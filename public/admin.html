@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#12101a">
-  <title>Crazy 88 · Admin</title>
+  <title>Crazy 88 · Beheer</title>
   <link rel="icon" href="/favicon.svg">
   <link rel="stylesheet" href="/css/app.css">
 </head>
@@ -13,12 +13,12 @@
     <div class="wrap wide">
       <div class="row">
         <div class="grow">
-          <div class="title">Crazy 88 · Admin</div>
+          <div class="title">Crazy 88 · Beheer</div>
           <div class="small muted"><span id="phase"></span> <span class="timer" id="timer"></span></div>
         </div>
-        <a class="btn secondary small" href="/review">Review (<span id="pending-top">0</span>)</a>
-        <a class="btn secondary small" href="/gallery">Gallery</a>
-        <button class="secondary small" id="logout">Log out</button>
+        <a class="btn secondary small" href="/review">Jury (<span id="pending-top">0</span>)</a>
+        <a class="btn secondary small" href="/gallery">Galerij</a>
+        <button class="secondary small" id="logout">Uitloggen</button>
       </div>
     </div>
   </header>
@@ -26,36 +26,36 @@
   <main class="wrap wide">
     <div class="grid2">
       <section class="card">
-        <h2>Game</h2>
+        <h2>Spel</h2>
         <form id="settings">
           <div class="row">
             <div class="grow">
-              <label for="duration">Duration (minutes)</label>
+              <label for="duration">Duur (minuten)</label>
               <input id="duration" type="number" min="1" max="1440" required>
             </div>
             <div class="grow">
-              <label for="goal">Goal (points, 0 = no goal)</label>
+              <label for="goal">Doel (punten, 0 = geen doel)</label>
               <input id="goal" type="number" min="0" required>
             </div>
             <div class="grow">
-              <label for="interval">Other teams' scores every (min, 0 = only at the end)</label>
+              <label for="interval">Scores andere teams elke (min, 0 = pas aan het eind)</label>
               <input id="interval" type="number" min="0" max="1440" required>
             </div>
           </div>
-          <button type="submit" class="secondary" style="margin-top:10px">Save settings</button>
+          <button type="submit" class="secondary" style="margin-top:10px">Instellingen opslaan</button>
         </form>
         <hr style="border-color:var(--border);margin:16px 0">
         <div class="row">
-          <button id="start" class="grow">▶ Start game</button>
-          <button id="end" class="danger grow">⏹ End game (5 min)</button>
+          <button id="start" class="grow">▶ Start spel</button>
+          <button id="end" class="danger grow">⏹ Beëindig spel (5 min)</button>
         </div>
         <p class="small muted" id="game-help"></p>
-        <button id="reset" class="secondary small">↺ Reset game</button>
-        <span class="small muted">Back to the lobby. Keeps prompts and settings, deletes teams and photos.</span>
+        <button id="reset" class="secondary small">↺ Spel resetten</button>
+        <span class="small muted">Terug naar de lobby. Prompts en instellingen blijven, teams en foto's worden verwijderd.</span>
       </section>
 
       <section class="card">
-        <div class="row"><h2 class="grow">Teams</h2><span class="muted"><span id="pending">0</span> photos waiting for review</span></div>
+        <div class="row"><h2 class="grow">Teams</h2><span class="muted"><span id="pending">0</span> foto's wachten op beoordeling</span></div>
         <ul class="scores" id="scores"></ul>
         <p class="small muted" id="scores-help"></p>
       </section>
@@ -65,25 +65,25 @@
       <h2>Prompts (<span id="prompt-count">0</span>)</h2>
       <div style="overflow-x:auto">
         <table>
-          <thead><tr><th>Prompt</th><th>Points</th><th title="Only one team can claim it">Exclusive</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Prompt</th><th>Punten</th><th title="Maar één team kan hem claimen">Exclusief</th><th>Status</th><th></th></tr></thead>
           <tbody id="prompts"></tbody>
         </table>
       </div>
 
-      <h3 style="margin-top:20px">Add prompt</h3>
+      <h3 style="margin-top:20px">Prompt toevoegen</h3>
       <form id="add" class="row">
-        <input class="grow" name="text" placeholder="Take a photo of…" required maxlength="300">
+        <input class="grow" name="text" placeholder="Maak een foto van…" required maxlength="300">
         <input name="points" type="number" min="0" value="10" style="width:90px" required>
-        <label class="row" style="margin:0"><input type="checkbox" name="exclusive"> Exclusive</label>
-        <button type="submit">Add</button>
+        <label class="row" style="margin:0"><input type="checkbox" name="exclusive"> Exclusief</label>
+        <button type="submit">Toevoegen</button>
       </form>
 
       <details style="margin-top:16px">
-        <summary class="muted">Bulk add</summary>
-        <p class="small muted">One prompt per line as <code>points | text</code>. Start the line with <code>!</code> to make it exclusive, e.g. <code>!50 | Team photo with a police officer</code>.</p>
+        <summary class="muted">Meerdere tegelijk toevoegen</summary>
+        <p class="small muted">Eén prompt per regel als <code>punten | tekst</code>. Begin de regel met <code>!</code> om hem exclusief te maken, bijv. <code>!50 | Teamfoto met een politieagent</code>.</p>
         <form id="bulk">
-          <textarea name="lines" rows="8" placeholder="10 | Selfie with a stranger's dog&#10;!50 | The whole team on a tractor"></textarea>
-          <button type="submit" style="margin-top:8px">Add all</button>
+          <textarea name="lines" rows="8" placeholder="10 | Selfie met de hond van een onbekende&#10;!50 | Het hele team op een tractor"></textarea>
+          <button type="submit" style="margin-top:8px">Alles toevoegen</button>
         </form>
       </details>
     </section>

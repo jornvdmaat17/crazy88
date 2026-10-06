@@ -9,7 +9,7 @@ export async function api(path, { method = 'GET', body } = {}) {
     location.href = '/';
     return new Promise(() => {}); // page is navigating away; leave the caller pending
   }
-  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  if (!res.ok) throw new Error(data.error || `Verzoek mislukt (${res.status})`);
   return data;
 }
 
@@ -69,7 +69,7 @@ export function fmtClock(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export const PHASE_LABEL = { lobby: 'Waiting to start', active: 'Game on', ending: 'Final minutes!', ended: 'Game over' };
+export const PHASE_LABEL = { lobby: 'Wachten op start', active: 'Spel bezig', ending: 'Laatste minuten!', ended: 'Spel voorbij' };
 
 // Live updates: the server only says "something changed", pages refetch what they need.
 export function connectLive(handlers) {

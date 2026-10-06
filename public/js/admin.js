@@ -40,21 +40,21 @@ function render() {
     $('interval').value = state.scoreIntervalMin;
   }
   $('scores-help').textContent = state.scoreIntervalMin
-    ? `Live scores. Teams see other teams' scores every ${state.scoreIntervalMin} minute${state.scoreIntervalMin === 1 ? '' : 's'}.`
-    : "Live scores. Teams don't see other teams' scores until the game ends.";
+    ? `Live scores. Teams zien de scores van andere teams elke ${state.scoreIntervalMin} ${state.scoreIntervalMin === 1 ? 'minuut' : 'minuten'}.`
+    : 'Live scores. Teams zien de scores van andere teams pas als het spel voorbij is.';
   $('duration').disabled = state.phase !== 'lobby';
   $('start').disabled = state.phase !== 'lobby';
   $('end').disabled = state.phase !== 'active';
   $('game-help').textContent = {
-    lobby: `${scores.length} team(s) joined. Start when everyone is in.`,
-    active: 'Ending gives everyone 5 more minutes to upload, then uploads close.',
-    ending: 'Final 5 minutes running. Reviews continue after uploads close.',
-    ended: 'Game over. Keep reviewing pending photos; the gallery updates live.',
+    lobby: `${scores.length} team(s) doen mee. Start als iedereen binnen is.`,
+    active: 'Beëindigen geeft iedereen nog 5 minuten om te uploaden, daarna sluit het uploaden.',
+    ending: 'Laatste 5 minuten lopen. Beoordelen gaat door nadat het uploaden sluit.',
+    ended: 'Spel voorbij. Blijf de wachtende foto\'s beoordelen; de galerij werkt live bij.',
   }[state.phase];
 
   $('scores').innerHTML = scores.length
     ? scores.map((s, i) => `<li><span>${i + 1}. ${esc(s.name)}</span><span>${s.score}${state.goalPoints ? ` / ${state.goalPoints}` : ''}</span></li>`).join('')
-    : '<li class="muted">No teams yet</li>';
+    : '<li class="muted">Nog geen teams</li>';
 
   $('prompt-count').textContent = prompts.length;
   if (editing($('prompts'))) {
@@ -67,9 +67,9 @@ function render() {
       <td><input name="text" value="${esc(p.text)}" maxlength="300"></td>
       <td class="pts"><input name="points" type="number" min="0" value="${p.points}"></td>
       <td><input name="exclusive" type="checkbox" ${p.exclusive ? 'checked' : ''}></td>
-      <td class="small muted">${p.claimed_by ? `🔒 ${esc(p.claimed_by)}` : `${p.photo_count} photo(s)`}</td>
-      <td><button class="secondary small" data-delete ${p.photo_count ? 'disabled title="Has photos"' : ''}>Delete</button></td>
-    </tr>`).join('') || '<tr><td colspan="5" class="muted">No prompts yet. Add some below.</td></tr>';
+      <td class="small muted">${p.claimed_by ? `🔒 ${esc(p.claimed_by)}` : `${p.photo_count} foto('s)`}</td>
+      <td><button class="secondary small" data-delete ${p.photo_count ? 'disabled title="Heeft foto\'s"' : ''}>Verwijderen</button></td>
+    </tr>`).join('') || '<tr><td colspan="5" class="muted">Nog geen prompts. Voeg ze hieronder toe.</td></tr>';
 }
 
 $('prompts').addEventListener('change', (e) => {
@@ -79,13 +79,13 @@ $('prompts').addEventListener('change', (e) => {
   act(() => api(`/api/admin/prompts/${row.dataset.id}`, {
     method: 'PUT',
     body: { text: get('text').value, points: Number(get('points').value), exclusive: get('exclusive').checked },
-  }), 'Saved');
+  }), 'Opgeslagen');
 });
 
 $('prompts').addEventListener('click', (e) => {
   const row = e.target.closest('tr[data-id]');
   if (!row || !e.target.matches('[data-delete]')) return;
-  if (!confirm('Delete this prompt?')) return;
+  if (!confirm('Deze prompt verwijderen?')) return;
   act(() => api(`/api/admin/prompts/${row.dataset.id}`, { method: 'DELETE' }));
 });
 
@@ -103,13 +103,13 @@ $('add').addEventListener('submit', (e) => {
     });
     e.target.text.value = '';
     return res;
-  }, 'Prompt added');
+  }, 'Prompt toegevoegd');
 });
 
 function parseBulk(text) {
   return text.split('\n').map((l) => l.trim()).filter(Boolean).map((line, i) => {
     const m = line.match(/^(!?)\s*(\d+)\s*\|\s*(.+)$/);
-    if (!m) throw new Error(`Line ${i + 1} is not "points | text": ${line}`);
+    if (!m) throw new Error(`Regel ${i + 1} is niet "punten | tekst": ${line}`);
     return { exclusive: m[1] === '!', points: Number(m[2]), text: m[3] };
   });
 }
@@ -127,30 +127,30 @@ $('bulk').addEventListener('submit', (e) => {
     const res = await api('/api/admin/prompts', { method: 'POST', body: { prompts: list } });
     e.target.lines.value = '';
     return res;
-  }, `${list.length} prompts added`);
+  }, `${list.length} prompts toegevoegd`);
 });
 
 $('settings').addEventListener('submit', (e) => {
   e.preventDefault();
   const body = { goalPoints: Number($('goal').value), scoreIntervalMin: Number($('interval').value) };
   if (view.state.phase === 'lobby') body.durationMin = Number($('duration').value);
-  act(() => api('/api/admin/settings', { method: 'POST', body }), 'Settings saved');
+  act(() => api('/api/admin/settings', { method: 'POST', body }), 'Instellingen opgeslagen');
 });
 
 $('start').addEventListener('click', () => {
   const s = view.state;
-  if (!confirm(`Start the game for ${view.scores.length} team(s)? It runs ${s.durationMin} minutes.`)) return;
-  act(() => api('/api/admin/start', { method: 'POST' }), 'Game started!');
+  if (!confirm(`Het spel starten voor ${view.scores.length} team(s)? Het duurt ${s.durationMin} minuten.`)) return;
+  act(() => api('/api/admin/start', { method: 'POST' }), 'Spel gestart!');
 });
 
 $('end').addEventListener('click', () => {
-  if (!confirm('End the game? Teams get 5 more minutes, then uploads close.')) return;
-  act(() => api('/api/admin/end', { method: 'POST' }), 'Final 5 minutes started');
+  if (!confirm('Het spel beëindigen? Teams krijgen nog 5 minuten, daarna sluit het uploaden.')) return;
+  act(() => api('/api/admin/end', { method: 'POST' }), 'Laatste 5 minuten gestart');
 });
 
 $('reset').addEventListener('click', () => {
-  if (!confirm('Reset the game? All teams, photos and scores are deleted. Prompts and settings are kept.')) return;
-  act(() => api('/api/admin/reset', { method: 'POST' }), 'Game reset, back to the lobby');
+  if (!confirm('Het spel resetten? Alle teams, foto\'s en scores worden verwijderd. Prompts en instellingen blijven.')) return;
+  act(() => api('/api/admin/reset', { method: 'POST' }), 'Spel gereset, terug naar de lobby');
 });
 
 $('logout').addEventListener('click', logout);

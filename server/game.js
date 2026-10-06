@@ -95,7 +95,7 @@ function createGame(db, { now = Date.now } = {}) {
 
   function joinTeam(name) {
     const clean = String(name || '').trim().replace(/\s+/g, ' ');
-    if (clean.length < 1 || clean.length > 40) throw new GameError('Team name must be 1-40 characters');
+    if (clean.length < 1 || clean.length > 40) throw new GameError('Teamnaam moet 1-40 tekens zijn');
     const existing = db.prepare('SELECT * FROM teams WHERE name = ?').get(clean);
     if (existing) return existing;
     const info = db.prepare('INSERT INTO teams (name, created_at) VALUES (?, ?)').run(clean, now());
@@ -139,8 +139,8 @@ function createGame(db, { now = Date.now } = {}) {
   function validatePrompt({ text, points, exclusive }) {
     const t = String(text || '').trim();
     const pts = Number(points);
-    if (!t || t.length > 300) throw new GameError('Prompt text must be 1-300 characters');
-    if (!Number.isInteger(pts) || pts < 0 || pts > 100000) throw new GameError('Points must be a whole number');
+    if (!t || t.length > 300) throw new GameError('Prompttekst moet 1-300 tekens zijn');
+    if (!Number.isInteger(pts) || pts < 0 || pts > 100000) throw new GameError('Punten moet een heel getal zijn');
     return { text: t, points: pts, exclusive: exclusive ? 1 : 0 };
   }
 
@@ -156,17 +156,17 @@ function createGame(db, { now = Date.now } = {}) {
   function updatePrompt(id, data) {
     const p = validatePrompt(data);
     const existing = db.prepare('SELECT * FROM prompts WHERE id = ?').get(id);
-    if (!existing) throw new GameError('Prompt not found', 404);
+    if (!existing) throw new GameError('Prompt niet gevonden', 404);
     if (p.exclusive !== existing.exclusive) {
       const approved = db.prepare("SELECT COUNT(*) AS n FROM photos WHERE prompt_id = ? AND status = 'approved'").get(id).n;
-      if (approved > 0) throw new GameError('Cannot change exclusive flag after a photo was approved');
+      if (approved > 0) throw new GameError('Exclusief kan niet meer worden gewijzigd nadat een foto is goedgekeurd');
     }
     db.prepare('UPDATE prompts SET text = ?, points = ?, exclusive = ? WHERE id = ?').run(p.text, p.points, p.exclusive, id);
   }
 
   function deletePrompt(id) {
     const n = db.prepare('SELECT COUNT(*) AS n FROM photos WHERE prompt_id = ?').get(id).n;
-    if (n > 0) throw new GameError('Cannot delete a prompt that already has photos');
+    if (n > 0) throw new GameError('Een prompt met foto\'s kan niet worden verwijderd');
     db.prepare('DELETE FROM prompts WHERE id = ?').run(id);
   }
 
@@ -176,27 +176,27 @@ function createGame(db, { now = Date.now } = {}) {
     const g = settings();
     if (goalPoints !== undefined) {
       const goal = Number(goalPoints);
-      if (!Number.isInteger(goal) || goal < 0) throw new GameError('Goal must be a whole number (0 = no goal)');
+      if (!Number.isInteger(goal) || goal < 0) throw new GameError('Doel moet een heel getal zijn (0 = geen doel)');
       db.prepare('UPDATE game SET goal_points = ? WHERE id = 1').run(goal);
     }
     if (scoreIntervalMin !== undefined) {
       const m = Number(scoreIntervalMin);
-      if (!Number.isInteger(m) || m < 0 || m > 24 * 60) throw new GameError('Score update interval must be 0-1440 minutes');
+      if (!Number.isInteger(m) || m < 0 || m > 24 * 60) throw new GameError('Score-interval moet 0-1440 minuten zijn');
       db.prepare('UPDATE game SET score_interval_min = ? WHERE id = 1').run(m);
     }
     if (durationMin !== undefined) {
       const d = Number(durationMin);
-      if (!Number.isInteger(d) || d < 1 || d > 24 * 60) throw new GameError('Duration must be 1-1440 minutes');
-      if (g.started_at) throw new GameError('Duration can only be changed before the game starts');
+      if (!Number.isInteger(d) || d < 1 || d > 24 * 60) throw new GameError('Duur moet 1-1440 minuten zijn');
+      if (g.started_at) throw new GameError('Duur kan alleen worden aangepast voordat het spel begint');
       db.prepare('UPDATE game SET duration_min = ? WHERE id = 1').run(d);
     }
   }
 
   function start() {
     const g = settings();
-    if (g.started_at) throw new GameError('Game already started');
+    if (g.started_at) throw new GameError('Spel is al gestart');
     const n = db.prepare('SELECT COUNT(*) AS n FROM prompts').get().n;
-    if (n === 0) throw new GameError('Add prompts before starting');
+    if (n === 0) throw new GameError('Voeg prompts toe voordat je start');
     const t = now();
     db.prepare('UPDATE game SET started_at = ?, ends_at = ? WHERE id = 1').run(t, t + g.duration_min * 60000);
     snapshot = null;
@@ -205,8 +205,8 @@ function createGame(db, { now = Date.now } = {}) {
   function triggerEnd() {
     const g = settings();
     const p = phase(g);
-    if (p === 'lobby') throw new GameError('Game has not started');
-    if (p !== 'active') throw new GameError('Game is already ending');
+    if (p === 'lobby') throw new GameError('Spel is nog niet gestart');
+    if (p !== 'active') throw new GameError('Spel is al aan het eindigen');
     const t = now();
     db.prepare('UPDATE game SET end_pressed_at = ?, ends_at = ? WHERE id = 1').run(t, Math.min(g.ends_at, t + ENDGAME_MS));
   }
@@ -229,19 +229,19 @@ function createGame(db, { now = Date.now } = {}) {
 
   function assertCanUpload(teamId, promptId) {
     const p = phase();
-    if (p === 'lobby') throw new GameError('The game has not started yet');
-    if (p === 'ended') throw new GameError('The game is over, no more uploads');
+    if (p === 'lobby') throw new GameError('Het spel is nog niet begonnen');
+    if (p === 'ended') throw new GameError('Het spel is voorbij, uploaden kan niet meer');
     const prompt = db.prepare('SELECT * FROM prompts WHERE id = ?').get(promptId);
-    if (!prompt) throw new GameError('Prompt not found', 404);
+    if (!prompt) throw new GameError('Prompt niet gevonden', 404);
     const mine = db.prepare('SELECT status FROM photos WHERE team_id = ? AND prompt_id = ?').all(teamId, promptId);
-    if (mine.some((ph) => ph.status === 'approved')) throw new GameError('You already completed this prompt');
-    if (mine.some((ph) => ph.status === 'pending')) throw new GameError('Your photo for this prompt is still being reviewed');
+    if (mine.some((ph) => ph.status === 'approved')) throw new GameError('Jullie hebben deze prompt al voltooid');
+    if (mine.some((ph) => ph.status === 'pending')) throw new GameError('Jullie foto voor deze prompt wordt nog beoordeeld');
     if (prompt.exclusive) {
       const claim = db.prepare(`
         SELECT t.name FROM photos ph JOIN teams t ON t.id = ph.team_id
         WHERE ph.prompt_id = ? AND ph.status = 'approved'
       `).get(promptId);
-      if (claim) throw new GameError(`Already claimed by ${claim.name}`);
+      if (claim) throw new GameError(`Al geclaimd door ${claim.name}`);
     }
   }
 
@@ -295,8 +295,8 @@ function createGame(db, { now = Date.now } = {}) {
       const ph = db.prepare(`
         SELECT ph.*, p.exclusive FROM photos ph JOIN prompts p ON p.id = ph.prompt_id WHERE ph.id = ?
       `).get(photoId);
-      if (!ph) throw new GameError('Photo not found', 404);
-      if (ph.status !== 'pending') throw new GameError('This photo was already reviewed', 409);
+      if (!ph) throw new GameError('Foto niet gevonden', 404);
+      if (ph.status !== 'pending') throw new GameError('Deze foto is al beoordeeld', 409);
       const t = now();
       const setStatus = db.prepare('UPDATE photos SET status = ?, reject_reason = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?');
 
@@ -311,7 +311,7 @@ function createGame(db, { now = Date.now } = {}) {
           WHERE x.prompt_id = ? AND x.status = 'approved'
         `).get(ph.prompt_id);
         if (claim) {
-          const reason = `Already claimed by ${claim.name}`;
+          const reason = `Al geclaimd door ${claim.name}`;
           setStatus.run('rejected', reason, t, reviewer, photoId);
           return { status: 'rejected', reason, teamId: ph.team_id, autoRejectedTeamIds: [] };
         }
@@ -322,7 +322,7 @@ function createGame(db, { now = Date.now } = {}) {
       if (ph.exclusive) {
         const team = db.prepare('SELECT name FROM teams WHERE id = ?').get(ph.team_id);
         const others = db.prepare("SELECT id, team_id FROM photos WHERE prompt_id = ? AND status = 'pending'").all(ph.prompt_id);
-        others.forEach((o) => setStatus.run('rejected', `Claimed by ${team.name}`, t, 'system', o.id));
+        others.forEach((o) => setStatus.run('rejected', `Geclaimd door ${team.name}`, t, 'system', o.id));
         autoRejectedTeamIds = [...new Set(others.map((o) => o.team_id))];
       }
       return { status: 'approved', reason: null, teamId: ph.team_id, autoRejectedTeamIds };

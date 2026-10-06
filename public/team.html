@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -18,7 +18,7 @@
         </div>
         <div style="text-align:right">
           <div class="score-big" id="score">0</div>
-          <div class="small muted" id="goal-line">pts</div>
+          <div class="small muted" id="goal-line">ptn</div>
         </div>
       </div>
       <div class="meter" id="meter"><div class="fill" id="fill" style="width:0"></div></div>
@@ -26,17 +26,17 @@
   </header>
 
   <main class="wrap">
-    <div id="ending-banner" class="banner warn hidden">Final 5 minutes! Uploads close when the timer hits zero.</div>
-    <div id="ended-banner" class="banner info hidden">Game over! <a href="/gallery">See everyone's photos →</a></div>
+    <div id="ending-banner" class="banner warn hidden">Laatste 5 minuten! Uploaden sluit als de timer op nul staat.</div>
+    <div id="ended-banner" class="banner info hidden">Het spel is voorbij! <a href="/gallery">Bekijk alle foto's →</a></div>
 
     <section id="lobby" class="card empty hidden">
-      <h2>Waiting for the game to start</h2>
-      <p class="muted"><span id="team-count">0</span> teams have joined. The admin will start the game soon.</p>
+      <h2>Wachten tot het spel begint</h2>
+      <p class="muted"><span id="team-count">0</span> teams doen mee. De beheerder start het spel zo.</p>
     </section>
 
     <section class="card" id="standings-card">
       <div class="row">
-        <h3 class="grow" style="margin:0">Standings</h3>
+        <h3 class="grow" style="margin:0">Stand</h3>
         <span class="small muted" id="standings-note"></span>
       </div>
       <ul class="scores" id="standings"></ul>
@@ -44,15 +44,15 @@
 
     <section id="game" class="hidden">
       <div class="tabs">
-        <button data-filter="todo" class="active">To do</button>
-        <button data-filter="pending">In review</button>
-        <button data-filter="done">Done</button>
+        <button data-filter="todo" class="active">Te doen</button>
+        <button data-filter="pending">In beoordeling</button>
+        <button data-filter="done">Klaar</button>
       </div>
       <div id="prompts"></div>
       <input type="file" id="file-input" accept="image/*" style="position:fixed;left:-9999px;opacity:0" tabindex="-1" aria-hidden="true">
     </section>
 
-    <p style="text-align:center;margin-top:30px"><button class="secondary small" id="logout">Log out</button></p>
+    <p style="text-align:center;margin-top:30px"><button class="secondary small" id="logout">Uitloggen</button></p>
   </main>
 
   <script src="/socket.io/socket.io.js"></script>
