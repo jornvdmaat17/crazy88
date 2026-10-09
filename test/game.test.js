@@ -221,3 +221,22 @@ test('gallery lists every attempt with its status and exclusive winner', () => {
   assert.equal(g.winner, 'Alpha');
   assert.deepEqual(g.photos.map((p) => [p.team, p.status]), [['Bravo', 'rejected'], ['Alpha', 'approved']]);
 });
+
+test('export list puts each photo in a numbered prompt folder named after the team and status', () => {
+  const { game, a, b, normal, special } = setup();
+  game.joinTeam('Team/Rood?');
+  const c = game.teams().find((t) => t.name === 'Team/Rood?');
+  game.start();
+  game.decide(game.addPhoto(a.id, normal.id, 'a1.jpg'), false, 'r1');
+  game.decide(game.addPhoto(a.id, normal.id, 'a2.png'), false, 'r1');
+  game.addPhoto(a.id, normal.id, 'a3.jpg');
+  game.decide(game.addPhoto(b.id, special.id, 'b1.jpg'), true, 'r1');
+  game.addPhoto(c.id, normal.id, 'c1.webp');
+  assert.deepEqual(game.exportList(), [
+    { filename: 'a1.jpg', path: '01 - Normal/Alpha (rejected).jpg' },
+    { filename: 'a2.png', path: '01 - Normal/Alpha (rejected).png' },
+    { filename: 'a3.jpg', path: '01 - Normal/Alpha (pending).jpg' },
+    { filename: 'c1.webp', path: '01 - Normal/TeamRood (pending).webp' },
+    { filename: 'b1.jpg', path: '02 - Special/Bravo (approved).jpg' },
+  ]);
+});

@@ -4,6 +4,7 @@ const crypto = require('node:crypto');
 const http = require('node:http');
 const express = require('express');
 const multer = require('multer');
+const archiver = require('archiver');
 const cookie = require('cookie');
 const { Server } = require('socket.io');
 const { openDb } = require('./db');
@@ -187,6 +188,20 @@ app.post('/api/admin/end', auth('admin'), (req, res) => {
   game.tick();
   notify();
   res.json(game.adminView());
+});
+
+// Photos are already compressed, so the zip only stores them; that keeps it fast on a small server.
+app.get('/api/admin/export', auth('admin'), (req, res, next) => {
+  const zip = archiver('zip', { store: true });
+  zip.on('warning', (err) => console.warn('Export:', err.message));
+  zip.on('error', next);
+  res.attachment(`crazy88-fotos-${new Date().toISOString().slice(0, 10)}.zip`);
+  zip.pipe(res);
+  for (const f of game.exportList()) {
+    const file = path.join(UPLOAD_DIR, f.filename);
+    if (fs.existsSync(file)) zip.file(file, { name: f.path });
+  }
+  zip.finalize();
 });
 
 app.post('/api/admin/reset', auth('admin'), (req, res) => {

@@ -172,7 +172,7 @@ $('end').addEventListener('click', () => {
 });
 
 $('reset').addEventListener('click', () => {
-  if (!confirm('Het spel resetten? Alle teams, foto\'s en scores worden verwijderd. Prompts en instellingen blijven.')) return;
+  if (!confirm('Het spel resetten? Alle teams, foto\'s en scores worden verwijderd. Prompts en instellingen blijven.\n\nDownload eerst de foto\'s als je ze wilt bewaren.')) return;
   act(() => api('/api/admin/reset', { method: 'POST' }), 'Spel gereset, terug naar de lobby');
 });
 

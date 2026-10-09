@@ -4,6 +4,12 @@ const ASSIGNMENT_TIMEOUT_MS = 2 * 60 * 1000;
 // Photo ids restart after a reset or data wipe; the random filename keeps browser caches from showing an old photo.
 const photoUrl = (id, filename) => `/api/photos/${id}?v=${filename.split('.')[0]}`;
 
+// A file or folder name that is valid on every OS: no separators or reserved characters, no trailing dots/spaces.
+function safeName(s, max) {
+  const clean = s.replace(/[\\/:*?"<>|\x00-\x1f]/g, '').replace(/\s+/g, ' ').trim();
+  return clean.slice(0, max).replace(/[. ]+$/, '') || '_';
+}
+
 class GameError extends Error {
   constructor(message, status = 400) {
     super(message);
@@ -421,13 +427,32 @@ function createGame(db, { now = Date.now } = {}) {
     };
   }
 
+  // Every photo with a readable path for a download: "03 - Prompt text/Team name (approved).jpg".
+  function exportList() {
+    const nr = new Map(prompts().map((p, i) => [p.id, String(i + 1).padStart(2, '0')]));
+    const used = new Set();
+    return db.prepare(`
+      SELECT ph.filename, ph.status, ph.prompt_id, p.text, t.name AS team
+      FROM photos ph JOIN prompts p ON p.id = ph.prompt_id JOIN teams t ON t.id = ph.team_id
+      ORDER BY p.sort_order, p.id, t.name, ph.created_at
+    `).all().map((ph) => {
+      const dir = `${nr.get(ph.prompt_id)} - ${safeName(ph.text, 80)}`;
+      const ext = ph.filename.slice(ph.filename.lastIndexOf('.'));
+      const base = `${dir}/${safeName(ph.team, 40)} (${ph.status})`;
+      let path = base + ext;
+      for (let n = 2; used.has(path); n++) path = `${base} ${n}${ext}`;
+      used.add(path);
+      return { filename: ph.filename, path };
+    });
+  }
+
   return {
     state, phase, tick, scoreboard, liveScores,
     joinTeam, createSession, getSession, deleteSession, teams,
     prompts, addPrompts, replacePrompts, updatePrompt, deletePrompt,
     updateSettings, start, triggerEnd, reset,
     addPhoto, assertCanUpload, getPhoto, nextForReviewer, pendingCount, decide,
-    teamView, adminView, gallery,
+    teamView, adminView, gallery, exportList,
   };
 }
 
