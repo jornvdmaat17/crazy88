@@ -59,7 +59,8 @@ The app also listens on `127.0.0.1:8095` on the server itself; change `APP_PORT`
 
 | Task | Command |
 |---|---|
-| Save all photos | `docker compose cp app:/data/uploads ./photos` |
+| Save all photos, one folder per prompt | `docker compose exec app node server/export-photos.js /tmp/photos && docker compose cp app:/tmp/photos ./photos` |
+| Save all photos as-is (random filenames) | `docker compose cp app:/data/uploads ./photos` |
 | Delete all data, including prompts | `docker compose down -v` |
 
 ## Development
